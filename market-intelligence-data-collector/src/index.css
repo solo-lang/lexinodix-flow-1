@@ -1,0 +1,91 @@
+@import "tailwindcss";
+
+/* ─── Base Reset ─────────────────────────────────────────────────────────── */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  scroll-behavior: smooth;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  background-color: #011C26;
+  color: #D9C5C1;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  line-height: 1.5;
+  overflow: hidden;
+}
+
+/* ─── RTL Support ─────────────────────────────────────────────────────────── */
+[dir="rtl"] .ms-auto { margin-left: auto; margin-right: unset; }
+[dir="ltr"] .ms-auto { margin-right: auto; margin-left: unset; }
+
+[dir="rtl"] .me-auto { margin-right: auto; margin-left: unset; }
+[dir="ltr"] .me-auto { margin-left: auto; margin-right: unset; }
+
+/* ─── Scrollbar Styling ──────────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #072A40; border-radius: 99px; }
+::-webkit-scrollbar-thumb:hover { background: #BFACA4; }
+
+/* ─── Select option styling ──────────────────────────────────────────────── */
+select option {
+  background-color: #011C26;
+  color: #D9C5C1;
+}
+
+/* ─── Animations ─────────────────────────────────────────────────────────── */
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.96); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+.animate-slide-up { animation: slideUp 0.2s ease-out both; }
+.animate-in        { animation: scaleIn 0.18s ease-out both; }
+.animate-fade-in   { animation: fadeIn 0.2s ease both; }
+
+/* ─── Line clamp ─────────────────────────────────────────────────────────── */
+.line-clamp-3 {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* ─── Code / Mono ────────────────────────────────────────────────────────── */
+code, pre, .font-mono {
+  font-family: 'IBM Plex Mono', 'JetBrains Mono', 'Fira Code', monospace;
+}
+
+/* ─── Table selection ────────────────────────────────────────────────────── */
+::selection {
+  background-color: #072A40;
+  color: #D9C5C1;
+}
+
+/* ─── Focus ring ─────────────────────────────────────────────────────────── */
+:focus-visible {
+  outline: 2px solid rgba(191, 172, 164, 0.4);
+  outline-offset: 2px;
+}
+
+/* ─── Gradient backgrounds ───────────────────────────────────────────────── */
+.bg-app-gradient {
+  background: linear-gradient(135deg, #011C26 0%, #072A40 50%, #011C26 100%);
+}
