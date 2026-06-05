@@ -86,6 +86,3 @@ CREATE TABLE IF NOT EXISTS research_notes (
 -- ALTER TABLE research_notes ENABLE ROW LEVEL SECURITY;
 `;
 
-export const isSupabaseConfigured = () => {
-  return supabaseUrl !== '' && supabaseAnonKey !== '';
-};
