@@ -1,122 +1,89 @@
+// @ts-nocheck
 import React, { useState } from 'react';
-import {
-  LayoutDashboard, Briefcase, Building2, Newspaper, BookOpen,
-  Upload, Search, Database, Settings, ChevronLeft, ChevronRight,
-  Microscope, Globe2, Zap
-} from 'lucide-react';
+import { LayoutDashboard, Briefcase, Building2, Newspaper, BookOpen, Upload, Search, Database, Settings, ChevronLeft, ChevronRight, Microscope, Globe2, Zap } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { useTranslation } from '../../lib/i18n';
 
-const NAV_ITEMS = [
-  { id: 'overview', icon: LayoutDashboard, section: null },
-  { id: 'jobs', icon: Briefcase, section: 'collection' },
-  { id: 'companies', icon: Building2, section: 'collection' },
-  { id: 'news', icon: Newspaper, section: 'collection' },
-  { id: 'notes', icon: BookOpen, section: 'collection' },
-  { id: 'import', icon: Upload, section: 'tools' },
-  { id: 'inspection', icon: Microscope, section: 'tools' },
-  { id: 'search', icon: Globe2, section: 'tools' },
-  { id: 'schema', icon: Database, section: 'system' },
-  { id: 'settings', icon: Settings, section: 'system' },
+const NAV = [
+  { id:'overview',   icon:LayoutDashboard, section:null },
+  { id:'jobs',       icon:Briefcase,       section:'collection' },
+  { id:'companies',  icon:Building2,       section:'collection' },
+  { id:'news',       icon:Newspaper,       section:'collection' },
+  { id:'notes',      icon:BookOpen,        section:'collection' },
+  { id:'import',     icon:Upload,          section:'tools' },
+  { id:'inspection', icon:Microscope,      section:'tools' },
+  { id:'search',     icon:Globe2,          section:'tools' },
+  { id:'schema',     icon:Database,        section:'system' },
+  { id:'settings',   icon:Settings,        section:'system' },
 ];
-
-const SECTIONS = {
-  collection: { en: 'Data Collection', ar: 'جمع البيانات' },
-  tools: { en: 'Tools', ar: 'الأدوات' },
-  system: { en: 'System', ar: 'النظام' },
+const SECS = {
+  collection:{ en:'Data Collection', ar:'جمع البيانات' },
+  tools:     { en:'Tools',           ar:'الأدوات' },
+  system:    { en:'System',          ar:'النظام' },
 };
 
 export default function Sidebar({ activePage, onNavigate }) {
-  const { language, isRTL, switchLanguage } = useApp();
+  const { language, switchLanguage } = useApp();
   const { t } = useTranslation(language);
   const [collapsed, setCollapsed] = useState(false);
-
-  let lastSection = null;
+  let lastSec = null;
 
   return (
-    <aside className={`
-      relative flex flex-col shrink-0 h-screen
-      bg-[#011C26] border-r border-[#072A40]/80
-      transition-all duration-300
-      ${collapsed ? 'w-16' : 'w-64'}
-    `}>
-      {/* Logo */}
-      <div className={`flex items-center gap-3 px-4 py-5 border-b border-[#072A40]/60 ${collapsed ? 'justify-center' : ''}`}>
-        <div className="shrink-0 w-8 h-8 rounded-lg bg-gradient-to-br from-[#072A40] to-[#BFACA4]/30 border border-[#BFACA4]/30 flex items-center justify-center">
-          <Zap size={15} className="text-[#D9C5C1]" />
+    <aside style={{ width:collapsed?64:240, display:'flex', flexDirection:'column', height:'100vh', flexShrink:0, transition:'width 0.25s', background:'linear-gradient(180deg,#0D2E42 0%,#072A40 60%,#061F30 100%)', borderRight:'1px solid rgba(255,255,255,0.07)', position:'relative' }}>
+
+      {/* Brand */}
+      <div style={{ display:'flex', alignItems:'center', gap:12, padding:'18px 16px', borderBottom:'1px solid rgba(255,255,255,0.07)', justifyContent:collapsed?'center':undefined }}>
+        <div style={{ width:32, height:32, borderRadius:10, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0, background:'linear-gradient(135deg,#1A4A6A,#BFACA4)', boxShadow:'0 2px 12px rgba(0,0,0,0.4)' }}>
+          <Zap size={15} color="#fff" />
         </div>
         {!collapsed && (
-          <div className="min-w-0">
-            <p className="text-[10px] font-bold text-[#BFACA4] uppercase tracking-[0.15em] leading-tight truncate">
-              Lexinodix
-            </p>
-            <p className="text-[9px] text-[#4F5459] uppercase tracking-widest truncate">
-              {t.moduleName}
-            </p>
+          <div style={{ minWidth:0, lineHeight:1.25 }}>
+            <p style={{ fontSize:11, fontWeight:800, color:'#D9C5C1', letterSpacing:'0.14em', textTransform:'uppercase' }}>Lexinodix</p>
+            <p style={{ fontSize:9,  fontWeight:500, color:'#3D5A6A', letterSpacing:'0.12em', textTransform:'uppercase' }}>{t?.moduleName || 'Intelligence'}</p>
           </div>
         )}
       </div>
 
-      {/* Navigation */}
-      <nav className="flex-1 overflow-y-auto py-3 px-2 space-y-0.5">
-        {NAV_ITEMS.map(item => {
-          const showSectionLabel = !collapsed && item.section && item.section !== lastSection;
-          if (item.section) lastSection = item.section;
-
-          const isActive = activePage === item.id;
+      {/* Nav */}
+      <nav style={{ flex:1, overflowY:'auto', padding:'10px 8px', display:'flex', flexDirection:'column', gap:1 }}>
+        {NAV.map(item => {
+          const showSec = !collapsed && item.section && item.section !== lastSec;
+          if (item.section) lastSec = item.section;
+          const active = activePage === item.id;
           const Icon = item.icon;
-          const label = t.nav[item.id] || item.id;
-
+          const label = t?.nav?.[item.id] || item.id;
           return (
             <React.Fragment key={item.id}>
-              {showSectionLabel && (
-                <div className="px-3 pt-4 pb-1">
-                  <span className="text-[9px] font-bold uppercase tracking-[0.18em] text-[#4F5459]">
-                    {SECTIONS[item.section]?.[language] || item.section}
+              {showSec && (
+                <div style={{ padding:'14px 10px 4px' }}>
+                  <span style={{ fontSize:9, fontWeight:700, letterSpacing:'0.18em', textTransform:'uppercase', color:'#2D4A5A' }}>
+                    {SECS[item.section]?.[language] || item.section}
                   </span>
                 </div>
               )}
-              <button
-                onClick={() => onNavigate(item.id)}
-                title={collapsed ? label : undefined}
-                className={`
-                  w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm
-                  transition-all duration-150 group
-                  ${collapsed ? 'justify-center' : ''}
-                  ${isActive
-                    ? 'bg-[#072A40] text-[#D9C5C1] shadow-sm border border-[#BFACA4]/10'
-                    : 'text-[#4F5459] hover:text-[#BFACA4] hover:bg-[#072A40]/40'
-                  }
-                `}
+              <button onClick={() => onNavigate(item.id)} title={collapsed ? label : undefined}
+                style={{ width:'100%', display:'flex', alignItems:'center', gap:10, padding:'9px 10px', borderRadius:10, cursor:'pointer', transition:'all 0.15s', position:'relative', justifyContent:collapsed?'center':undefined, background:active?'rgba(255,255,255,0.08)':'transparent', color:active?'#F5F7F8':'#4A6878', border:active?'1px solid rgba(191,172,164,0.12)':'1px solid transparent' }}
+                onMouseEnter={e=>{ if(!active){e.currentTarget.style.background='rgba(255,255,255,0.05)';e.currentTarget.style.color='#8FA8B8';} }}
+                onMouseLeave={e=>{ if(!active){e.currentTarget.style.background='transparent';e.currentTarget.style.color='#4A6878';} }}
               >
-                <Icon size={17} className={`shrink-0 transition-colors ${isActive ? 'text-[#BFACA4]' : 'text-[#4F5459] group-hover:text-[#BFACA4]'}`} />
-                {!collapsed && (
-                  <span className="truncate font-medium text-xs">{label}</span>
-                )}
-                {isActive && !collapsed && (
-                  <div className="ms-auto w-1.5 h-1.5 rounded-full bg-[#BFACA4] shrink-0" />
-                )}
+                {active && <span className="nav-active-bar" />}
+                <Icon size={15} style={{ flexShrink:0, color:active?'#BFACA4':'inherit' }} />
+                {!collapsed && <span style={{ fontSize:12.5, fontWeight:active?600:400, flex:1, textAlign:'left', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{label}</span>}
+                {active && !collapsed && <span style={{ width:5, height:5, borderRadius:'50%', background:'#BFACA4', flexShrink:0 }} />}
               </button>
             </React.Fragment>
           );
         })}
       </nav>
 
-      {/* Language switcher */}
+      {/* Lang switcher */}
       {!collapsed && (
-        <div className="px-4 py-3 border-t border-[#072A40]/60">
-          <div className="flex gap-1 p-1 rounded-xl bg-[#072A40]/40 border border-[#BFACA4]/10">
-            {['en', 'ar'].map(lang => (
-              <button
-                key={lang}
-                onClick={() => switchLanguage(lang)}
-                className={`flex-1 py-1.5 rounded-lg text-xs font-semibold uppercase tracking-wider transition-all ${
-                  language === lang
-                    ? 'bg-[#072A40] text-[#D9C5C1] shadow-sm'
-                    : 'text-[#4F5459] hover:text-[#BFACA4]'
-                }`}
-              >
-                {lang === 'en' ? 'EN' : 'عر'}
+        <div style={{ padding:'8px 10px', borderTop:'1px solid rgba(255,255,255,0.07)' }}>
+          <div style={{ display:'flex', gap:4, padding:4, borderRadius:10, background:'rgba(0,0,0,0.25)', border:'1px solid rgba(255,255,255,0.06)' }}>
+            {['en','ar'].map(l => (
+              <button key={l} onClick={() => switchLanguage(l)}
+                style={{ flex:1, padding:'6px 0', borderRadius:7, fontSize:11, fontWeight:700, letterSpacing:'0.1em', cursor:'pointer', transition:'all 0.15s', background:language===l?'rgba(255,255,255,0.1)':'transparent', color:language===l?'#D9C5C1':'#3D5A6A', border:'none' }}>
+                {l === 'en' ? 'EN' : 'عر'}
               </button>
             ))}
           </div>
@@ -124,20 +91,12 @@ export default function Sidebar({ activePage, onNavigate }) {
       )}
 
       {/* Collapse toggle */}
-      <button
-        onClick={() => setCollapsed(c => !c)}
-        className={`
-          absolute top-[72px] -right-3 z-10
-          w-6 h-6 rounded-full bg-[#011C26] border border-[#072A40]/80
-          flex items-center justify-center
-          text-[#4F5459] hover:text-[#BFACA4] transition-colors
-          shadow-md
-        `}
+      <button onClick={() => setCollapsed(c => !c)}
+        style={{ position:'absolute', top:72, right:-12, width:24, height:24, borderRadius:'50%', display:'flex', alignItems:'center', justifyContent:'center', background:'#0D2E42', border:'1px solid rgba(255,255,255,0.1)', color:'#4A6878', cursor:'pointer', boxShadow:'0 2px 8px rgba(0,0,0,0.4)', zIndex:10 }}
+        onMouseEnter={e => e.currentTarget.style.color='#BFACA4'}
+        onMouseLeave={e => e.currentTarget.style.color='#4A6878'}
       >
-        {collapsed
-          ? (isRTL ? <ChevronLeft size={12} /> : <ChevronRight size={12} />)
-          : (isRTL ? <ChevronRight size={12} /> : <ChevronLeft size={12} />)
-        }
+        {collapsed ? <ChevronRight size={12}/> : <ChevronLeft size={12}/>}
       </button>
     </aside>
   );
