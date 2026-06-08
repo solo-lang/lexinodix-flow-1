@@ -1,200 +1,130 @@
 /**
- * Lexinodix Intelligence Engine – Market Collector
- * Database Abstraction Layer
- *
- * Provides a unified interface for Supabase operations with
- * graceful fallback to localStorage when Supabase is not configured.
+ * DB Abstraction — Supabase when configured, localStorage otherwise.
  */
-
 import { supabase, isSupabaseConfigured } from './supabase';
 
-// ─── LOCAL STORAGE FALLBACK ──────────────────────────────────────────────────
+const genId = () =>
+  typeof crypto !== 'undefined' && crypto.randomUUID
+    ? crypto.randomUUID()
+    : Math.random().toString(36).slice(2) + Date.now().toString(36);
 
-const generateId = () => crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2);
-
-const localStore = {
-  get: (key) => {
-    try {
-      const raw = localStorage.getItem(`lexinodix_${key}`);
-      return raw ? JSON.parse(raw) : [];
-    } catch { return []; }
-  },
-  set: (key, data) => {
-    try { localStorage.setItem(`lexinodix_${key}`, JSON.stringify(data)); } catch {}
-  },
+/* ── LocalStorage backend ─────────────────────────────────────── */
+const ls = {
+  get: (k) => { try { return JSON.parse(localStorage.getItem(`lexinodix_${k}`) || '[]'); } catch { return []; } },
+  set: (k, d) => { try { localStorage.setItem(`lexinodix_${k}`, JSON.stringify(d)); } catch {} },
 };
 
 const localCRUD = (table) => ({
-  async select(filters = {}) {
-    let data = localStore.get(table);
-    // Apply search filter
-    if (filters.search) {
-      const q = filters.search.toLowerCase();
-      data = data.filter(row =>
-        Object.values(row).some(v => String(v || '').toLowerCase().includes(q))
-      );
-    }
-    // Apply field filters
-    if (filters.fields) {
-      Object.entries(filters.fields).forEach(([k, v]) => {
-        if (v) data = data.filter(row => String(row[k] || '').toLowerCase().includes(v.toLowerCase()));
-      });
-    }
+  async select(f = {}) {
+    let data = ls.get(table);
+    if (f.search) { const q = f.search.toLowerCase(); data = data.filter(r => Object.values(r).some(v => String(v||'').toLowerCase().includes(q))); }
+    if (f.fields) Object.entries(f.fields).forEach(([k,v]) => { if(v) data = data.filter(r => String(r[k]||'').toLowerCase().includes(v.toLowerCase())); });
     const total = data.length;
-    // Apply pagination
-    if (filters.page !== undefined && filters.pageSize) {
-      const start = filters.page * filters.pageSize;
-      data = data.slice(start, start + filters.pageSize);
-    }
+    if (f.page !== undefined && f.pageSize) data = data.slice(f.page * f.pageSize, (f.page+1) * f.pageSize);
     return { data, total, error: null };
   },
   async selectOne(id) {
-    const data = localStore.get(table);
-    return { data: data.find(r => r.id === id) || null, error: null };
+    return { data: ls.get(table).find(r => r.id === id) || null, error: null };
   },
   async insert(record) {
-    const data = localStore.get(table);
+    const data = ls.get(table);
     const now = new Date().toISOString();
-    const newRecord = { ...record, id: generateId(), created_at: now, updated_at: now };
-    data.unshift(newRecord);
-    localStore.set(table, data);
-    return { data: newRecord, error: null };
+    const newR = { ...record, id: genId(), created_at: now, updated_at: now };
+    data.unshift(newR); ls.set(table, data);
+    return { data: newR, error: null };
   },
   async update(id, record) {
-    const data = localStore.get(table);
+    const data = ls.get(table);
     const idx = data.findIndex(r => r.id === id);
-    if (idx === -1) return { data: null, error: { message: 'Record not found' } };
+    if (idx === -1) return { data: null, error: { message: 'Not found' } };
     data[idx] = { ...data[idx], ...record, updated_at: new Date().toISOString() };
-    localStore.set(table, data);
+    ls.set(table, data);
     return { data: data[idx], error: null };
   },
   async delete(id) {
-    const data = localStore.get(table);
-    const filtered = data.filter(r => r.id !== id);
-    localStore.set(table, filtered);
+    ls.set(table, ls.get(table).filter(r => r.id !== id));
     return { error: null };
   },
   async bulkInsert(records) {
-    const data = localStore.get(table);
+    const existing = ls.get(table);
     const now = new Date().toISOString();
-    const newRecords = records.map(r => ({ ...r, id: generateId(), created_at: now, updated_at: now }));
-    localStore.set(table, [...newRecords, ...data]);
-    return { data: newRecords, count: newRecords.length, error: null };
+    const newRecs = records.map(r => ({ ...r, id: genId(), created_at: now, updated_at: now }));
+    ls.set(table, [...newRecs, ...existing]);
+    return { data: newRecs, count: newRecs.length, error: null };
   },
 });
 
-// ─── SUPABASE CRUD ───────────────────────────────────────────────────────────
+/* ── Supabase backend ─────────────────────────────────────────── */
+const SEARCH_COLS = {
+  jobs:           ['title','company','industry','location','description','requirements'],
+  companies:      ['name','industry','website','description','services','location'],
+  news:           ['headline','source','summary','full_content','industry'],
+  research_notes: ['title','category','observation'],
+};
 
-const supabaseCRUD = (table, searchColumns = []) => ({
-  async select(filters = {}) {
-    let query = supabase.from(table).select('*', { count: 'exact' });
-
-    // Full-text search across columns
-    if (filters.search && searchColumns.length > 0) {
-      const searchConditions = searchColumns
-        .map(col => `${col}.ilike.%${filters.search}%`)
-        .join(',');
-      query = query.or(searchConditions);
-    }
-
-    // Field-specific filters
-    if (filters.fields) {
-      Object.entries(filters.fields).forEach(([k, v]) => {
-        if (v) query = query.ilike(k, `%${v}%`);
-      });
-    }
-
-    // Pagination
-    if (filters.page !== undefined && filters.pageSize) {
-      const start = filters.page * filters.pageSize;
-      query = query.range(start, start + filters.pageSize - 1);
-    }
-
-    query = query.order('created_at', { ascending: false });
-    const { data, count, error } = await query;
-    return { data: data || [], total: count || 0, error };
+const sbCRUD = (table) => ({
+  async select(f = {}) {
+    if (!supabase) return localCRUD(table).select(f);
+    let q = supabase.from(table).select('*', { count: 'exact' });
+    const cols = SEARCH_COLS[table] || [];
+    if (f.search && cols.length) q = q.or(cols.map(c => `${c}.ilike.%${f.search}%`).join(','));
+    if (f.fields) Object.entries(f.fields).forEach(([k,v]) => { if(v) q = q.ilike(k, `%${v}%`); });
+    if (f.page !== undefined && f.pageSize) q = q.range(f.page*f.pageSize, (f.page+1)*f.pageSize-1);
+    q = q.order('created_at', { ascending: false });
+    const { data, count, error } = await q;
+    return { data: data||[], total: count||0, error };
   },
   async selectOne(id) {
+    if (!supabase) return localCRUD(table).selectOne(id);
     const { data, error } = await supabase.from(table).select('*').eq('id', id).single();
     return { data, error };
   },
   async insert(record) {
+    if (!supabase) return localCRUD(table).insert(record);
     const { data, error } = await supabase.from(table).insert([record]).select().single();
     return { data, error };
   },
   async update(id, record) {
+    if (!supabase) return localCRUD(table).update(id, record);
     const { data, error } = await supabase.from(table).update({ ...record, updated_at: new Date().toISOString() }).eq('id', id).select().single();
     return { data, error };
   },
   async delete(id) {
+    if (!supabase) return localCRUD(table).delete(id);
     const { error } = await supabase.from(table).delete().eq('id', id);
     return { error };
   },
   async bulkInsert(records) {
+    if (!supabase) return localCRUD(table).bulkInsert(records);
     const { data, error } = await supabase.from(table).insert(records).select();
-    return { data: data || [], count: data?.length || 0, error };
+    return { data: data||[], count: data?.length||0, error };
   },
 });
 
-// ─── TABLE SEARCH COLUMNS ────────────────────────────────────────────────────
+const mkDB = (t) => isSupabaseConfigured() ? sbCRUD(t) : localCRUD(t);
 
-const TABLE_SEARCH_COLS = {
-  jobs: ['title', 'company', 'industry', 'location', 'description', 'requirements'],
-  companies: ['name', 'industry', 'website', 'description', 'services', 'location'],
-  news: ['headline', 'source', 'summary', 'full_content', 'industry'],
-  research_notes: ['title', 'category', 'observation'],
-};
-
-// ─── FACTORY ─────────────────────────────────────────────────────────────────
-
-const createDB = (table) => {
-  if (isSupabaseConfigured()) {
-    return supabaseCRUD(table, TABLE_SEARCH_COLS[table] || []);
-  }
-  return localCRUD(table);
-};
-
-// ─── EXPORTED DATABASES ──────────────────────────────────────────────────────
-
-export const JobsDB = createDB('jobs');
-export const CompaniesDB = createDB('companies');
-export const NewsDB = createDB('news');
-export const NotesDB = createDB('research_notes');
-
-// ─── GLOBAL SEARCH ───────────────────────────────────────────────────────────
+export const JobsDB     = mkDB('jobs');
+export const CompaniesDB = mkDB('companies');
+export const NewsDB      = mkDB('news');
+export const NotesDB     = mkDB('research_notes');
 
 export async function globalSearch(query) {
-  if (!query || query.length < 2) return { jobs: [], companies: [], news: [], notes: [] };
-
-  const [jobs, companies, news, notes] = await Promise.all([
+  if (!query || query.length < 2) return { jobs:[], companies:[], news:[], notes:[] };
+  const [j,c,n,r] = await Promise.all([
     JobsDB.select({ search: query, pageSize: 5, page: 0 }),
     CompaniesDB.select({ search: query, pageSize: 5, page: 0 }),
     NewsDB.select({ search: query, pageSize: 5, page: 0 }),
     NotesDB.select({ search: query, pageSize: 5, page: 0 }),
   ]);
-
-  return {
-    jobs: jobs.data || [],
-    companies: companies.data || [],
-    news: news.data || [],
-    notes: notes.data || [],
-  };
+  return { jobs: j.data||[], companies: c.data||[], news: n.data||[], notes: r.data||[] };
 }
 
-// ─── STATS ───────────────────────────────────────────────────────────────────
-
 export async function getStats() {
-  const [jobs, companies, news, notes] = await Promise.all([
-    JobsDB.select({ pageSize: 1, page: 0 }),
-    CompaniesDB.select({ pageSize: 1, page: 0 }),
-    NewsDB.select({ pageSize: 1, page: 0 }),
-    NotesDB.select({ pageSize: 1, page: 0 }),
+  const [j,c,n,r] = await Promise.all([
+    JobsDB.select({ pageSize:1, page:0 }),
+    CompaniesDB.select({ pageSize:1, page:0 }),
+    NewsDB.select({ pageSize:1, page:0 }),
+    NotesDB.select({ pageSize:1, page:0 }),
   ]);
-
-  return {
-    jobs: jobs.total || 0,
-    companies: companies.total || 0,
-    news: news.total || 0,
-    notes: notes.total || 0,
-  };
+  return { jobs: j.total||0, companies: c.total||0, news: n.total||0, notes: r.total||0 };
 }
