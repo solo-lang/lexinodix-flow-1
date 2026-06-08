@@ -1,24 +1,14 @@
-import React from 'react';
-
-const variants = {
-  default: 'bg-[#072A40] text-[#D9C5C1] border-[#BFACA4]/20',
-  accent: 'bg-[#BFACA4]/20 text-[#D9C5C1] border-[#BFACA4]/30',
-  success: 'bg-emerald-900/40 text-emerald-300 border-emerald-700/30',
-  warning: 'bg-amber-900/40 text-amber-300 border-amber-700/30',
-  danger: 'bg-red-900/40 text-red-300 border-red-700/30',
-  info: 'bg-blue-900/40 text-blue-300 border-blue-700/30',
-  muted: 'bg-[#4F5459]/30 text-[#BFACA4] border-[#4F5459]/30',
+// @ts-nocheck
+const V = {
+  default: { background:'rgba(255,255,255,0.07)', color:'#A8B4BC', border:'1px solid rgba(255,255,255,0.08)' },
+  accent:  { background:'rgba(191,172,164,0.12)', color:'#D9C5C1', border:'1px solid rgba(191,172,164,0.2)' },
+  success: { background:'rgba(16,185,129,0.1)',   color:'#34D399', border:'1px solid rgba(16,185,129,0.2)' },
+  warning: { background:'rgba(245,158,11,0.1)',   color:'#FBBF24', border:'1px solid rgba(245,158,11,0.2)' },
+  danger:  { background:'rgba(239,68,68,0.1)',    color:'#F87171', border:'1px solid rgba(239,68,68,0.2)' },
+  info:    { background:'rgba(59,130,246,0.1)',   color:'#60A5FA', border:'1px solid rgba(59,130,246,0.2)' },
+  muted:   { background:'rgba(255,255,255,0.04)', color:'#5A7080', border:'1px solid rgba(255,255,255,0.06)' },
 };
-
-export default function Badge({ children, variant = 'default', className = '' }) {
-  return (
-    <span className={`
-      inline-flex items-center gap-1 px-2 py-0.5
-      text-xs font-medium rounded-md border
-      ${variants[variant] || variants.default}
-      ${className}
-    `}>
-      {children}
-    </span>
-  );
+export default function Badge({ children, variant = 'default', className = '', style = {} }) {
+  const s = V[variant] || V.default;
+  return <span className={`badge-base ${className}`} style={{ ...s, ...style }}>{children}</span>;
 }
