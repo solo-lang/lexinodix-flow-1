@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
-import { Settings2, Database, Globe, Save, AlertCircle, CheckCircle2, Eye, EyeOff, RefreshCw, Trash2, Info } from 'lucide-react';
-import Button from '../components/ui/Button';
-import { Input, Select } from '../components/ui/Input';
+// @ts-nocheck
+import React, { useState } from 'react';
+import { Database, Globe, Save, AlertCircle, CheckCircle2, Eye, EyeOff, RefreshCw, Trash2, Info, Shield } from 'lucide-react';
 import Badge from '../components/ui/Badge';
+import Button from '../components/ui/Button';
 import { useApp } from '../context/AppContext';
 import { useTranslation } from '../lib/i18n';
 import { isSupabaseConfigured } from '../lib/supabase';
@@ -12,232 +12,180 @@ export default function Settings() {
   const { t } = useTranslation(language);
   const configured = isSupabaseConfigured();
 
-  const [supabaseUrl, setSupabaseUrl] = useState(() => localStorage.getItem('lexinodix_supabase_url') || import.meta.env.VITE_SUPABASE_URL || '');
-  const [supabaseKey, setSupabaseKey] = useState(() => localStorage.getItem('lexinodix_supabase_key') || import.meta.env.VITE_SUPABASE_ANON_KEY || '');
+  const [url,     setUrl]     = useState(() => localStorage.getItem('lexinodix_supabase_url')  || import.meta.env.VITE_SUPABASE_URL     || '');
+  const [key,     setKey]     = useState(() => localStorage.getItem('lexinodix_supabase_key')  || import.meta.env.VITE_SUPABASE_ANON_KEY || '');
   const [showKey, setShowKey] = useState(false);
-  const [saving, setSaving] = useState(false);
+  const [saving,  setSaving]  = useState(false);
   const [testing, setTesting] = useState(false);
-  const [testResult, setTestResult] = useState(null);
+  const [testRes, setTestRes] = useState(null);
 
-  const localDataSizes = () => {
-    const keys = ['jobs', 'companies', 'news', 'research_notes'];
-    return keys.map(k => {
-      const raw = localStorage.getItem(`lexinodix_${k}`);
-      const count = raw ? JSON.parse(raw).length : 0;
-      return { key: k, count };
-    });
-  };
+  const TABLES = ['jobs','companies','news','research_notes'];
+  const LABELS = { jobs:'Jobs', companies:'Companies', news:'News', research_notes:'Research Notes' };
 
-  const [localSizes, setLocalSizes] = useState(localDataSizes());
+  const getLocalSizes = () => TABLES.map(k => {
+    try { return { key:k, count: JSON.parse(localStorage.getItem(`lexinodix_${k}`)||'[]').length }; }
+    catch { return { key:k, count:0 }; }
+  });
+  const [localSizes, setLocalSizes] = useState(getLocalSizes);
 
-  const handleSave = async () => {
+  const save = async () => {
     setSaving(true);
-    localStorage.setItem('lexinodix_supabase_url', supabaseUrl);
-    localStorage.setItem('lexinodix_supabase_key', supabaseKey);
-    await new Promise(r => setTimeout(r, 500));
+    localStorage.setItem('lexinodix_supabase_url', url);
+    localStorage.setItem('lexinodix_supabase_key', key);
+    await new Promise(r => setTimeout(r, 400));
     setSaving(false);
-    showToast('Settings saved. Please refresh the page to apply changes.');
+    showToast?.('Settings saved â€” refresh page to apply', 'success');
   };
 
-  const handleTest = async () => {
-    setTesting(true);
-    setTestResult(null);
+  const test = async () => {
+    if (!url || !key) { setTestRes({ ok:false, msg:'Fill in URL and Key first.' }); return; }
+    setTesting(true); setTestRes(null);
     try {
       const { createClient } = await import('@supabase/supabase-js');
-      const client = createClient(supabaseUrl, supabaseKey);
-      const { data, error } = await client.from('jobs').select('id').limit(1);
+      const { error } = await createClient(url, key).from('jobs').select('id').limit(1);
       if (error) throw error;
-      setTestResult({ success: true, message: 'Connection successful! Tables are accessible.' });
-    } catch (e) {
-      setTestResult({ success: false, message: e.message || 'Connection failed' });
-    }
+      setTestRes({ ok:true, msg:'Connection successful!' });
+    } catch(e) { setTestRes({ ok:false, msg: e.message || 'Connection failed.' }); }
     setTesting(false);
   };
 
-  const clearLocalData = (key) => {
-    localStorage.removeItem(`lexinodix_${key}`);
-    setLocalSizes(localDataSizes());
-    showToast(`Cleared ${key} local data`);
-  };
+  const clearTable = (k) => { localStorage.removeItem(`lexinodix_${k}`); setLocalSizes(getLocalSizes()); showToast?.(`Cleared ${k}`, 'success'); };
+  const clearAll   = ()  => { TABLES.forEach(k => localStorage.removeItem(`lexinodix_${k}`)); setLocalSizes(getLocalSizes()); showToast?.('All local data cleared', 'success'); };
 
-  const clearAllLocal = () => {
-    ['jobs', 'companies', 'news', 'research_notes'].forEach(k => localStorage.removeItem(`lexinodix_${k}`));
-    setLocalSizes(localDataSizes());
-    showToast('All local data cleared');
-  };
-
-  const TABLE_LABELS = { jobs: 'Jobs', companies: 'Companies', news: 'News', research_notes: 'Research Notes' };
+  const card = { background:'#173D55', border:'1px solid rgba(255,255,255,0.08)', borderRadius:14, padding:20, marginBottom:0 };
+  const label = { display:'block', fontSize:11, fontWeight:600, color:'#5A7080', textTransform:'uppercase', letterSpacing:'0.08em', marginBottom:6 };
 
   return (
-    <div className="p-6 max-w-3xl mx-auto space-y-6">
-      {/* Header */}
+    <div className="page-content" style={{ maxWidth:680, margin:'0 auto' }}>
+
       <div>
-        <div className="flex items-center gap-3 mb-1">
-          <Settings2 size={18} className="text-[#BFACA4]" />
-          <h2 className="text-xl font-bold text-white">{t.settings.title}</h2>
-        </div>
-        <p className="text-sm text-[#4F5459]">{t.settings.subtitle}</p>
+        <h2 style={{ fontSize:20, fontWeight:800, color:'#F5F7F8' }}>Settings</h2>
+        <p style={{ fontSize:12, color:'#5A7080', marginTop:3 }}>Configure database and interface preferences</p>
       </div>
 
-      {/* Connection status */}
-      <div className={`flex items-start gap-3 p-4 rounded-xl border ${
-        configured
-          ? 'bg-emerald-900/20 border-emerald-700/30'
-          : 'bg-amber-900/20 border-amber-700/30'
-      }`}>
-        {configured
-          ? <CheckCircle2 size={16} className="text-emerald-400 mt-0.5 shrink-0" />
-          : <AlertCircle size={16} className="text-amber-400 mt-0.5 shrink-0" />
-        }
-        <div>
-          <p className={`text-sm font-semibold ${configured ? 'text-emerald-300' : 'text-amber-300'}`}>
-            {configured ? t.settings.connectedMode : t.settings.localMode}
+      {/* Status Banner */}
+      <div style={{ display:'flex', alignItems:'flex-start', gap:12, padding:'14px 16px', borderRadius:14, background:configured?'rgba(16,185,129,0.08)':'rgba(245,158,11,0.08)', border:configured?'1px solid rgba(16,185,129,0.2)':'1px solid rgba(245,158,11,0.2)' }}>
+        <div style={{ width:34, height:34, borderRadius:10, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0, background:configured?'rgba(16,185,129,0.15)':'rgba(245,158,11,0.15)' }}>
+          {configured ? <CheckCircle2 size={16} style={{ color:'#34D399' }}/> : <AlertCircle size={16} style={{ color:'#FBBF24' }}/>}
+        </div>
+        <div style={{ flex:1 }}>
+          <p style={{ fontSize:13, fontWeight:700, color:configured?'#34D399':'#FBBF24', marginBottom:4 }}>
+            {configured ? 'ðŸŸ¢ Supabase Connected' : 'ðŸŸ¡ Local Mode â€” No Database'}
           </p>
-          <p className={`text-xs mt-0.5 ${configured ? 'text-emerald-400/70' : 'text-amber-400/70'}`}>
+          <p style={{ fontSize:12, color:configured?'rgba(52,211,153,0.65)':'rgba(251,191,36,0.65)', lineHeight:1.55 }}>
             {configured
-              ? 'Data is being stored in your Supabase database.'
-              : t.settings.localModeDesc
-            }
+              ? 'Data persists in your Supabase cloud database across sessions and devices.'
+              : 'Data saved in this browser only. Add Supabase credentials below for persistent cloud storage.'}
           </p>
         </div>
+        <Badge variant={configured?'success':'warning'}>{configured?'Cloud':'Local'}</Badge>
       </div>
 
-      {/* Supabase config */}
-      <section className="p-5 rounded-2xl bg-[#072A40]/40 border border-[#BFACA4]/10 space-y-5">
-        <div className="flex items-center gap-2 mb-1">
-          <Database size={15} className="text-[#BFACA4]" />
-          <h3 className="text-sm font-bold text-white">Supabase Configuration</h3>
-        </div>
-
-        <Input
-          label={t.settings.supabaseUrl}
-          value={supabaseUrl}
-          onChange={e => setSupabaseUrl(e.target.value)}
-          placeholder="https://your-project.supabase.co"
-          helper="Found in: Supabase Dashboard → Project Settings → API"
-        />
-
-        <div className="relative">
-          <Input
-            label={t.settings.supabaseKey}
-            type={showKey ? 'text' : 'password'}
-            value={supabaseKey}
-            onChange={e => setSupabaseKey(e.target.value)}
-            placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
-            helper="Use the anon/public key (not service_role)"
-          />
-          <button
-            onClick={() => setShowKey(s => !s)}
-            className="absolute right-3 top-7 text-[#4F5459] hover:text-[#BFACA4] transition-colors"
-          >
-            {showKey ? <EyeOff size={14} /> : <Eye size={14} />}
-          </button>
-        </div>
-
-        {testResult && (
-          <div className={`flex items-start gap-2 p-3 rounded-xl border text-xs ${
-            testResult.success ? 'bg-emerald-900/20 border-emerald-700/30 text-emerald-300' : 'bg-red-900/20 border-red-700/30 text-red-300'
-          }`}>
-            {testResult.success ? <CheckCircle2 size={13} className="mt-0.5 shrink-0" /> : <AlertCircle size={13} className="mt-0.5 shrink-0" />}
-            {testResult.message}
+      {/* Supabase Config */}
+      <div style={card}>
+        <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:18 }}>
+          <div style={{ width:28, height:28, borderRadius:8, background:'rgba(191,172,164,0.1)', display:'flex', alignItems:'center', justifyContent:'center' }}>
+            <Database size={14} style={{ color:'#BFACA4' }}/>
           </div>
-        )}
-
-        <div className="flex gap-3">
-          <Button variant="secondary" size="sm" loading={testing} icon={<RefreshCw size={13} />} onClick={handleTest}>
-            Test Connection
-          </Button>
-          <Button variant="primary" size="sm" loading={saving} icon={<Save size={13} />} onClick={handleSave}>
-            {t.settings.save}
-          </Button>
+          <h3 style={{ fontSize:13, fontWeight:700, color:'#F5F7F8' }}>Supabase Configuration</h3>
         </div>
+        <div style={{ display:'flex', flexDirection:'column', gap:14 }}>
+          <div>
+            <label style={label}>Project URL</label>
+            <input value={url} onChange={e => setUrl(e.target.value)} placeholder="https://xxxx.supabase.co" className="field-base"/>
+            <p style={{ fontSize:11, color:'#3D5A6A', marginTop:5 }}>Dashboard â†’ Project Settings â†’ API</p>
+          </div>
+          <div>
+            <label style={label}>Anon / Public Key</label>
+            <div style={{ position:'relative' }}>
+              <input type={showKey?'text':'password'} value={key} onChange={e => setKey(e.target.value)} placeholder="eyJhbGciâ€¦" className="field-base" style={{ paddingRight:38 }}/>
+              <button onClick={() => setShowKey(s => !s)} style={{ position:'absolute', right:10, top:'50%', transform:'translateY(-50%)', color:'#5A7080', background:'none', border:'none', cursor:'pointer', display:'flex' }}>
+                {showKey ? <EyeOff size={14}/> : <Eye size={14}/>}
+              </button>
+            </div>
+            <p style={{ fontSize:11, color:'#3D5A6A', marginTop:5 }}>Use the anon/public key â€” never service_role</p>
+          </div>
 
-        <div className="p-3 rounded-xl bg-blue-900/10 border border-blue-700/20 flex items-start gap-2">
-          <Info size={13} className="text-blue-400 mt-0.5 shrink-0" />
-          <p className="text-xs text-blue-400/80">
-            After saving, refresh the page for changes to take effect. You can also set{' '}
-            <code className="font-mono text-blue-300 bg-blue-900/30 px-1 rounded">VITE_SUPABASE_URL</code> and{' '}
-            <code className="font-mono text-blue-300 bg-blue-900/30 px-1 rounded">VITE_SUPABASE_ANON_KEY</code> in your <code className="font-mono text-blue-300 bg-blue-900/30 px-1 rounded">.env</code> file.
-          </p>
+          {testRes && (
+            <div style={{ display:'flex', alignItems:'flex-start', gap:8, padding:'10px 12px', borderRadius:10, fontSize:12, background:testRes.ok?'rgba(16,185,129,0.08)':'rgba(239,68,68,0.08)', border:testRes.ok?'1px solid rgba(16,185,129,0.2)':'1px solid rgba(239,68,68,0.2)', color:testRes.ok?'#34D399':'#F87171' }}>
+              {testRes.ok ? <CheckCircle2 size={13} style={{ marginTop:1, flexShrink:0 }}/> : <AlertCircle size={13} style={{ marginTop:1, flexShrink:0 }}/>}
+              {testRes.msg}
+            </div>
+          )}
+
+          <div style={{ display:'flex', gap:8 }}>
+            <Button variant="secondary" size="sm" loading={testing} icon={<RefreshCw size={12}/>} onClick={test}>Test Connection</Button>
+            <Button variant="primary"   size="sm" loading={saving}  icon={<Save size={12}/>}      onClick={save}>Save Settings</Button>
+          </div>
+
+          <div style={{ display:'flex', alignItems:'flex-start', gap:8, padding:'10px 12px', borderRadius:10, background:'rgba(255,255,255,0.03)', border:'1px solid rgba(255,255,255,0.06)' }}>
+            <Info size={12} style={{ color:'#5A7080', marginTop:1, flexShrink:0 }}/>
+            <p style={{ fontSize:11, color:'#5A7080', lineHeight:1.6 }}>
+              After saving, refresh the page to apply. You can also set{' '}
+              <code style={{ background:'rgba(255,255,255,0.07)', padding:'1px 5px', borderRadius:4, color:'#A8B4BC', fontSize:10 }}>VITE_SUPABASE_URL</code> and{' '}
+              <code style={{ background:'rgba(255,255,255,0.07)', padding:'1px 5px', borderRadius:4, color:'#A8B4BC', fontSize:10 }}>VITE_SUPABASE_ANON_KEY</code> in your{' '}
+              <code style={{ background:'rgba(255,255,255,0.07)', padding:'1px 5px', borderRadius:4, color:'#A8B4BC', fontSize:10 }}>.env</code> file.
+            </p>
+          </div>
         </div>
-      </section>
+      </div>
 
       {/* Language */}
-      <section className="p-5 rounded-2xl bg-[#072A40]/40 border border-[#BFACA4]/10 space-y-4">
-        <div className="flex items-center gap-2">
-          <Globe size={15} className="text-[#BFACA4]" />
-          <h3 className="text-sm font-bold text-white">Interface Language</h3>
+      <div style={card}>
+        <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:18 }}>
+          <div style={{ width:28, height:28, borderRadius:8, background:'rgba(191,172,164,0.1)', display:'flex', alignItems:'center', justifyContent:'center' }}>
+            <Globe size={14} style={{ color:'#BFACA4' }}/>
+          </div>
+          <h3 style={{ fontSize:13, fontWeight:700, color:'#F5F7F8' }}>Interface Language</h3>
         </div>
-        <div className="flex gap-3">
-          {[
-            { id: 'en', label: 'English', sub: 'LTR' },
-            { id: 'ar', label: 'العربية', sub: 'RTL' },
-          ].map(lang => (
-            <button
-              key={lang.id}
-              onClick={() => switchLanguage(lang.id)}
-              className={`flex-1 flex flex-col items-center gap-1 py-4 rounded-xl border transition-all ${
-                language === lang.id
-                  ? 'bg-[#072A40] border-[#BFACA4]/40 text-[#D9C5C1]'
-                  : 'bg-transparent border-[#072A40]/60 text-[#4F5459] hover:border-[#BFACA4]/20 hover:text-[#BFACA4]'
-              }`}
-            >
-              <span className="text-base font-bold">{lang.label}</span>
-              <span className="text-[10px] opacity-60">{lang.sub}</span>
+        <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:10 }}>
+          {[{ id:'en', label:'English', sub:'LTR Layout' }, { id:'ar', label:'Ø§Ù„Ø¹Ø±Ø¨ÙŠØ©', sub:'RTL Layout' }].map(l => (
+            <button key={l.id} onClick={() => switchLanguage(l.id)}
+              style={{ padding:'16px', borderRadius:12, textAlign:'center', cursor:'pointer', transition:'all 0.2s', background:language===l.id?'rgba(191,172,164,0.12)':'transparent', border:language===l.id?'1px solid rgba(191,172,164,0.3)':'1px solid rgba(255,255,255,0.06)', color:language===l.id?'#D9C5C1':'#5A7080' }}>
+              <div style={{ fontSize:16, fontWeight:700, marginBottom:3 }}>{l.label}</div>
+              <div style={{ fontSize:10, opacity:0.6 }}>{l.sub}</div>
             </button>
           ))}
         </div>
-      </section>
+      </div>
 
       {/* Local Storage */}
-      <section className="p-5 rounded-2xl bg-[#072A40]/40 border border-[#BFACA4]/10 space-y-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Database size={15} className="text-[#BFACA4]" />
-            <h3 className="text-sm font-bold text-white">Local Storage</h3>
+      <div style={card}>
+        <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:16 }}>
+          <div style={{ display:'flex', alignItems:'center', gap:8 }}>
+            <div style={{ width:28, height:28, borderRadius:8, background:'rgba(191,172,164,0.1)', display:'flex', alignItems:'center', justifyContent:'center' }}>
+              <Shield size={14} style={{ color:'#BFACA4' }}/>
+            </div>
+            <h3 style={{ fontSize:13, fontWeight:700, color:'#F5F7F8' }}>Local Storage</h3>
           </div>
-          <Button variant="danger" size="xs" icon={<Trash2 size={12} />} onClick={clearAllLocal}>
-            Clear All
-          </Button>
+          <Button variant="danger" size="xs" icon={<Trash2 size={11}/>} onClick={clearAll}>Clear All</Button>
         </div>
-        <div className="space-y-2">
-          {localSizes.map(({ key, count }) => (
-            <div key={key} className="flex items-center justify-between py-2 px-3 rounded-xl bg-[#011C26]/40 border border-[#072A40]/40">
-              <div className="flex items-center gap-2">
-                <span className="text-xs text-white font-medium">{TABLE_LABELS[key]}</span>
-                <Badge variant={count > 0 ? 'accent' : 'muted'}>{count} records</Badge>
+        <div style={{ display:'flex', flexDirection:'column', gap:6 }}>
+          {localSizes.map(({ key: k, count }) => (
+            <div key={k} style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'10px 14px', borderRadius:10, background:'rgba(5,15,22,0.5)', border:'1px solid rgba(255,255,255,0.04)' }}>
+              <div style={{ display:'flex', alignItems:'center', gap:8 }}>
+                <span style={{ fontSize:12, fontWeight:600, color:'#F5F7F8' }}>{LABELS[k]}</span>
+                <Badge variant={count>0?'accent':'muted'}>{count} records</Badge>
               </div>
               {count > 0 && (
-                <button onClick={() => clearLocalData(key)} className="text-[10px] text-red-400 hover:text-red-300 transition-colors">
-                  Clear
-                </button>
+                <button onClick={() => clearTable(k)} style={{ fontSize:11, color:'#F87171', background:'none', border:'none', cursor:'pointer' }}>Clear</button>
               )}
             </div>
           ))}
         </div>
-        <p className="text-xs text-[#4F5459]">
-          Local storage data is only available in this browser. Connect Supabase for persistent, multi-device storage.
-        </p>
-      </section>
+      </div>
 
-      {/* App Info */}
-      <section className="p-5 rounded-2xl bg-[#072A40]/40 border border-[#BFACA4]/10">
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 text-center">
-          {[
-            { label: 'Platform', value: 'Lexinodix IE' },
-            { label: 'Module', value: 'Market Collector' },
-            { label: 'Version', value: '1.0.0' },
-            { label: 'Build', value: 'Module 1 of 5' },
-            { label: 'Storage', value: configured ? 'Supabase' : 'LocalStorage' },
-            { label: 'Direction', value: language === 'ar' ? 'RTL (Arabic)' : 'LTR (English)' },
-          ].map(({ label, value }) => (
-            <div key={label}>
-              <p className="text-[10px] text-[#4F5459] uppercase tracking-wider mb-1">{label}</p>
-              <p className="text-sm font-semibold text-[#D9C5C1]">{value}</p>
+      {/* App info */}
+      <div style={{ ...card, padding:'16px 20px' }}>
+        <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:16, textAlign:'center' }}>
+          {[['Platform','Lexinodix IE'],['Module','Market Collector'],['Version','1.0.0'],['Build','Module 1 of 5'],['Storage',configured?'Supabase':'LocalStorage'],['Language',language==='ar'?'Arabic (RTL)':'English (LTR)']].map(([l,v]) => (
+            <div key={l}>
+              <p style={{ fontSize:9, color:'#3D5A6A', textTransform:'uppercase', letterSpacing:'0.12em', marginBottom:4 }}>{l}</p>
+              <p style={{ fontSize:12, fontWeight:700, color:'#D9C5C1' }}>{v}</p>
             </div>
           ))}
         </div>
-      </section>
+      </div>
     </div>
   );
 }
