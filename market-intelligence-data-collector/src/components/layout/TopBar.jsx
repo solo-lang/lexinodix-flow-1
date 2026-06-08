@@ -1,141 +1,124 @@
+// @ts-nocheck
 import React, { useState, useRef, useEffect } from 'react';
-import { Search, Bell, Database, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { Search, Database, AlertCircle, CheckCircle2, X, Briefcase, Building2, Newspaper, BookOpen } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { useTranslation } from '../../lib/i18n';
 import { isSupabaseConfigured } from '../../lib/supabase';
 import { globalSearch } from '../../lib/db';
 
+const ICONS = { jobs:Briefcase, companies:Building2, news:Newspaper, notes:BookOpen };
+
 export default function TopBar({ title, subtitle, onNavigate }) {
-  const { language, isRTL } = useApp();
+  const { language } = useApp();
   const { t } = useTranslation(language);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [searchResults, setSearchResults] = useState(null);
-  const [searching, setSearching] = useState(false);
-  const [showResults, setShowResults] = useState(false);
-  const searchRef = useRef(null);
-  const timerRef = useRef(null);
+  const [query, setQuery]     = useState('');
+  const [results, setResults] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [open, setOpen]       = useState(false);
+  const ref   = useRef(null);
+  const timer = useRef(null);
   const configured = isSupabaseConfigured();
 
-  const handleSearch = (val) => {
-    setSearchQuery(val);
-    clearTimeout(timerRef.current);
-    if (!val.trim() || val.length < 2) {
-      setSearchResults(null);
-      setShowResults(false);
-      return;
-    }
-    setSearching(true);
-    setShowResults(true);
-    timerRef.current = setTimeout(async () => {
-      const results = await globalSearch(val);
-      setSearchResults(results);
-      setSearching(false);
-    }, 400);
+  const doSearch = (val) => {
+    setQuery(val);
+    clearTimeout(timer.current);
+    if (!val || val.length < 2) { setResults(null); setOpen(false); return; }
+    setLoading(true); setOpen(true);
+    timer.current = setTimeout(async () => {
+      const r = await globalSearch(val);
+      setResults(r); setLoading(false);
+    }, 350);
   };
 
+  const clear = () => { setQuery(''); setResults(null); setOpen(false); };
+
   useEffect(() => {
-    const handler = (e) => {
-      if (searchRef.current && !searchRef.current.contains(e.target)) {
-        setShowResults(false);
-      }
-    };
-    document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
+    const h = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
+    document.addEventListener('mousedown', h);
+    return () => document.removeEventListener('mousedown', h);
   }, []);
 
-  const totalResults = searchResults
-    ? Object.values(searchResults).reduce((s, a) => s + a.length, 0)
-    : 0;
+  const total = results ? Object.values(results).reduce((s,a) => s + a.length, 0) : 0;
 
   return (
-    <header className="shrink-0 flex items-center justify-between px-6 py-3.5 border-b border-[#072A40]/60 bg-[#011C26]/80 backdrop-blur-sm">
+    <header style={{ height:60, display:'flex', alignItems:'center', justifyContent:'space-between', padding:'0 24px', flexShrink:0, background:'rgba(7,42,64,0.6)', backdropFilter:'blur(16px)', borderBottom:'1px solid rgba(255,255,255,0.07)' }}>
+
       {/* Title */}
-      <div>
-        <h1 className="text-base font-bold text-white leading-tight">{title}</h1>
-        {subtitle && <p className="text-xs text-[#4F5459] mt-0.5">{subtitle}</p>}
+      <div style={{ flex:1, minWidth:0, marginRight:16 }}>
+        <h1 style={{ fontSize:15, fontWeight:700, color:'#F5F7F8', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{title}</h1>
+        {subtitle && <p style={{ fontSize:11, color:'#5A7080', marginTop:1 }}>{subtitle}</p>}
       </div>
 
-      {/* Right side */}
-      <div className="flex items-center gap-3">
-        {/* Quick search */}
-        <div ref={searchRef} className="relative">
-          <div className="relative">
-            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#4F5459] pointer-events-none" />
-            <input
-              value={searchQuery}
-              onChange={e => handleSearch(e.target.value)}
-              onFocus={() => searchQuery.length >= 2 && setShowResults(true)}
-              placeholder={t.globalSearch.placeholder}
-              className="w-64 bg-[#072A40]/60 border border-[#072A40]/80 rounded-xl px-3 py-1.5 pl-8 text-xs text-white placeholder-[#4F5459] focus:outline-none focus:border-[#BFACA4]/40 transition-colors"
+      <div style={{ display:'flex', alignItems:'center', gap:10, flexShrink:0 }}>
+
+        {/* Search */}
+        <div ref={ref} style={{ position:'relative' }}>
+          <div style={{ position:'relative', display:'flex', alignItems:'center' }}>
+            <Search size={13} style={{ position:'absolute', left:10, color:'#5A7080', pointerEvents:'none' }} />
+            <input value={query} onChange={e => doSearch(e.target.value)} onFocus={() => query.length >= 2 && setOpen(true)}
+              placeholder="Quick search…"
+              style={{ width:210, padding:'7px 32px 7px 30px', background:'rgba(255,255,255,0.05)', border:'1px solid rgba(255,255,255,0.09)', borderRadius:10, fontSize:12, color:'#F5F7F8', outline:'none' }}
+              onFocus={e => { e.target.style.background='rgba(255,255,255,0.08)'; e.target.style.borderColor='rgba(191,172,164,0.3)'; }}
+              onBlur={e  => { e.target.style.background='rgba(255,255,255,0.05)'; e.target.style.borderColor='rgba(255,255,255,0.09)'; }}
             />
+            {query && <button onClick={clear} style={{ position:'absolute', right:8, color:'#5A7080', background:'none', border:'none', cursor:'pointer', display:'flex' }}><X size={12}/></button>}
           </div>
 
-          {/* Dropdown results */}
-          {showResults && (
-            <div className="absolute top-full right-0 mt-1 w-80 bg-[#072A40] border border-[#BFACA4]/20 rounded-xl shadow-2xl z-50 overflow-hidden">
-              {searching ? (
-                <div className="px-4 py-3 text-xs text-[#4F5459] text-center">{t.globalSearch.searching}</div>
-              ) : totalResults === 0 ? (
-                <div className="px-4 py-3 text-xs text-[#4F5459] text-center">{t.globalSearch.noResults}</div>
+          {/* Dropdown */}
+          {open && (
+            <div style={{ position:'absolute', top:'calc(100% + 6px)', right:0, width:300, background:'#123247', border:'1px solid rgba(191,172,164,0.18)', borderRadius:14, boxShadow:'0 16px 48px rgba(0,0,0,0.5)', zIndex:200, overflow:'hidden' }}>
+              {loading ? (
+                <p style={{ padding:'14px 16px', fontSize:12, color:'#5A7080', textAlign:'center' }}>Searching…</p>
+              ) : total === 0 ? (
+                <p style={{ padding:'14px 16px', fontSize:12, color:'#5A7080', textAlign:'center' }}>No results for "{query}"</p>
               ) : (
-                <div className="max-h-72 overflow-y-auto divide-y divide-[#072A40]/60">
-                  {Object.entries(searchResults || {}).map(([section, items]) =>
-                    items.length > 0 ? (
-                      <div key={section}>
-                        <div className="px-3 pt-2 pb-1">
-                          <span className="text-[9px] font-bold uppercase tracking-widest text-[#4F5459]">{t.nav[section]}</span>
+                <>
+                  <div style={{ maxHeight:280, overflowY:'auto' }}>
+                    {Object.entries(results || {}).map(([sec, items]) =>
+                      items.length === 0 ? null : (
+                        <div key={sec}>
+                          <div style={{ padding:'8px 14px 4px', display:'flex', alignItems:'center', gap:5 }}>
+                            {React.createElement(ICONS[sec] || Database, { size:10, style:{ color:'#BFACA4' } })}
+                            <span style={{ fontSize:9, fontWeight:700, letterSpacing:'0.14em', textTransform:'uppercase', color:'#3D5A6A' }}>
+                              {t?.nav?.[sec] || sec} ({items.length})
+                            </span>
+                          </div>
+                          {items.map(item => (
+                            <button key={item.id} onClick={() => { onNavigate?.(sec); setOpen(false); clear(); }}
+                              style={{ width:'100%', padding:'7px 14px', display:'block', background:'transparent', border:'none', cursor:'pointer', textAlign:'left' }}
+                              onMouseEnter={e => e.currentTarget.style.background='rgba(255,255,255,0.05)'}
+                              onMouseLeave={e => e.currentTarget.style.background='transparent'}
+                            >
+                              <p style={{ fontSize:12, fontWeight:500, color:'#F5F7F8', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>
+                                {item.title || item.name || item.headline || '—'}
+                              </p>
+                              <p style={{ fontSize:11, color:'#5A7080', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>
+                                {item.industry || item.source || item.category || item.location || ''}
+                              </p>
+                            </button>
+                          ))}
                         </div>
-                        {items.map(item => (
-                          <button
-                            key={item.id}
-                            onClick={() => {
-                              onNavigate?.(section);
-                              setShowResults(false);
-                              setSearchQuery('');
-                            }}
-                            className="w-full text-left px-3 py-2 hover:bg-[#072A40]/80 transition-colors"
-                          >
-                            <p className="text-xs text-white font-medium truncate">
-                              {item.title || item.name || item.headline || item.company || '—'}
-                            </p>
-                            <p className="text-[10px] text-[#4F5459] truncate">
-                              {item.industry || item.source || item.category || ''}
-                            </p>
-                          </button>
-                        ))}
-                      </div>
-                    ) : null
-                  )}
-                </div>
-              )}
-              {totalResults > 0 && (
-                <button
-                  onClick={() => { onNavigate?.('search'); setShowResults(false); }}
-                  className="w-full px-4 py-2.5 text-xs text-[#BFACA4] hover:bg-[#072A40]/60 border-t border-[#BFACA4]/10 text-center transition-colors"
-                >
-                  View all results →
-                </button>
+                      )
+                    )}
+                  </div>
+                  <button onClick={() => { onNavigate?.('search'); setOpen(false); clear(); }}
+                    style={{ width:'100%', padding:'10px 14px', fontSize:11, color:'#BFACA4', borderTop:'1px solid rgba(255,255,255,0.06)', textAlign:'center', background:'transparent', border:'none', cursor:'pointer' }}
+                    onMouseEnter={e => e.currentTarget.style.background='rgba(255,255,255,0.04)'}
+                    onMouseLeave={e => e.currentTarget.style.background='transparent'}
+                  >
+                    View all {total} results →
+                  </button>
+                </>
               )}
             </div>
           )}
         </div>
 
-        {/* Supabase status */}
-        <div className={`
-          flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border text-xs
-          ${configured
-            ? 'bg-emerald-900/20 border-emerald-700/30 text-emerald-400'
-            : 'bg-amber-900/20 border-amber-700/30 text-amber-400'
-          }
-        `}>
+        {/* Status badge */}
+        <div style={{ display:'flex', alignItems:'center', gap:5, padding:'6px 10px', borderRadius:8, fontSize:11, fontWeight:600, background:configured?'rgba(16,185,129,0.1)':'rgba(245,158,11,0.1)', border:configured?'1px solid rgba(16,185,129,0.2)':'1px solid rgba(245,158,11,0.2)', color:configured?'#34D399':'#FBBF24' }}>
           <Database size={11} />
-          <span className="hidden sm:inline font-medium">
-            {configured ? 'Supabase' : 'Local'}
-          </span>
-          {configured
-            ? <CheckCircle2 size={11} className="text-emerald-400" />
-            : <AlertCircle size={11} className="text-amber-400" />
-          }
+          {configured ? <CheckCircle2 size={11}/> : <AlertCircle size={11}/>}
+          <span style={{ fontSize:10 }}>{configured ? 'Cloud' : 'Local'}</span>
         </div>
       </div>
     </header>
