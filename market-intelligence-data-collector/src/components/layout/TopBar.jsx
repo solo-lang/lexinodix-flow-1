@@ -6,16 +6,16 @@ import { useTranslation } from '../../lib/i18n';
 import { isSupabaseConfigured } from '../../lib/supabase';
 import { globalSearch } from '../../lib/db';
 
-const ICONS = { jobs:Briefcase, companies:Building2, news:Newspaper, notes:BookOpen };
+const ICONS = { jobs: Briefcase, companies: Building2, news: Newspaper, notes: BookOpen };
 
 export default function TopBar({ title, subtitle, onNavigate }) {
   const { language } = useApp();
   const { t } = useTranslation(language);
-  const [query, setQuery]     = useState('');
+  const [query, setQuery] = useState('');
   const [results, setResults] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [open, setOpen]       = useState(false);
-  const ref   = useRef(null);
+  const [open, setOpen] = useState(false);
+  const ref = useRef(null);
   const timer = useRef(null);
   const configured = isSupabaseConfigured();
 
@@ -38,73 +38,66 @@ export default function TopBar({ title, subtitle, onNavigate }) {
     return () => document.removeEventListener('mousedown', h);
   }, []);
 
-  const total = results ? Object.values(results).reduce((s,a) => s + a.length, 0) : 0;
+  const total = results ? Object.values(results).reduce((s, a) => s + a.length, 0) : 0;
 
   return (
-    <header style={{ height:60, display:'flex', alignItems:'center', justifyContent:'space-between', padding:'0 24px', flexShrink:0, background:'rgba(7,42,64,0.6)', backdropFilter:'blur(16px)', borderBottom:'1px solid rgba(255,255,255,0.07)' }}>
-
+    <header className="h-14 flex items-center justify-between px-6 flex-shrink-0 bg-surface/80 backdrop-blur-md border-b border-border">
       {/* Title */}
-      <div style={{ flex:1, minWidth:0, marginRight:16 }}>
-        <h1 style={{ fontSize:15, fontWeight:700, color:'#F5F7F8', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{title}</h1>
-        {subtitle && <p style={{ fontSize:11, color:'#5A7080', marginTop:1 }}>{subtitle}</p>}
+      <div className="flex-1 min-w-0 mr-4">
+        <h1 className="text-[15px] font-bold text-text truncate">{title}</h1>
+        {subtitle && <p className="text-[11px] text-text2 mt-0.5">{subtitle}</p>}
       </div>
-
-      <div style={{ display:'flex', alignItems:'center', gap:10, flexShrink:0 }}>
-
+      <div className="flex items-center gap-3 flex-shrink-0">
         {/* Search */}
-        <div ref={ref} style={{ position:'relative' }}>
-          <div style={{ position:'relative', display:'flex', alignItems:'center' }}>
-            <Search size={13} style={{ position:'absolute', left:10, color:'#5A7080', pointerEvents:'none' }} />
-            <input value={query} onChange={e => doSearch(e.target.value)} onFocus={() => query.length >= 2 && setOpen(true)}
+        <div ref={ref} className="relative">
+          <div className="relative flex items-center">
+            <Search size={13} className="absolute left-3 text-text3 pointer-events-none" />
+            <input 
+              value={query} 
+              onChange={e => doSearch(e.target.value)} 
+              onFocus={() => query.length >= 2 && setOpen(true)}
               placeholder="Quick search…"
-              style={{ width:210, padding:'7px 32px 7px 30px', background:'rgba(255,255,255,0.05)', border:'1px solid rgba(255,255,255,0.09)', borderRadius:10, fontSize:12, color:'#F5F7F8', outline:'none' }}
-              onFocus={e => { e.target.style.background='rgba(255,255,255,0.08)'; e.target.style.borderColor='rgba(191,172,164,0.3)'; }}
-              onBlur={e  => { e.target.style.background='rgba(255,255,255,0.05)'; e.target.style.borderColor='rgba(255,255,255,0.09)'; }}
+              className="w-52 pl-9 pr-8 py-1.5 bg-bg border border-border rounded-lg text-sm text-text outline-none transition-all placeholder:text-text3 focus:border-accent focus:ring-1 focus:ring-accent/30"
             />
-            {query && <button onClick={clear} style={{ position:'absolute', right:8, color:'#5A7080', background:'none', border:'none', cursor:'pointer', display:'flex' }}><X size={12}/></button>}
+            {query && (
+              <button onClick={clear} className="absolute right-3 text-text3 hover:text-text transition-colors">
+                <X size={12} />
+              </button>
+            )}
           </div>
 
           {/* Dropdown */}
           {open && (
-            <div style={{ position:'absolute', top:'calc(100% + 6px)', right:0, width:300, background:'#123247', border:'1px solid rgba(191,172,164,0.18)', borderRadius:14, boxShadow:'0 16px 48px rgba(0,0,0,0.5)', zIndex:200, overflow:'hidden' }}>
+            <div className="absolute top-full right-0 mt-1.5 w-72 bg-surface border border-border-active rounded-xl shadow-xl z-50 overflow-hidden animate-in">
               {loading ? (
-                <p style={{ padding:'14px 16px', fontSize:12, color:'#5A7080', textAlign:'center' }}>Searching…</p>
+                <p className="py-3.5 px-4 text-xs text-text3 text-center">Searching…</p>
               ) : total === 0 ? (
-                <p style={{ padding:'14px 16px', fontSize:12, color:'#5A7080', textAlign:'center' }}>No results for "{query}"</p>
+                <p className="py-3.5 px-4 text-xs text-text3 text-center">No results for "{query}"</p>
               ) : (
                 <>
-                  <div style={{ maxHeight:280, overflowY:'auto' }}>
+                  <div className="max-h-72 overflow-y-auto">
                     {Object.entries(results || {}).map(([sec, items]) =>
                       items.length === 0 ? null : (
                         <div key={sec}>
-                          <div style={{ padding:'8px 14px 4px', display:'flex', alignItems:'center', gap:5 }}>
-                            {React.createElement(ICONS[sec] || Database, { size:10, style:{ color:'#BFACA4' } })}
-                            <span style={{ fontSize:9, fontWeight:700, letterSpacing:'0.14em', textTransform:'uppercase', color:'#3D5A6A' }}>
+                          <div className="px-3.5 pt-2 pb-1 flex items-center gap-1.5">
+                            {React.createElement(ICONS[sec] || Database, { size: 10, className: "text-accent" })}
+                            <span className="text-[9px] font-bold tracking-widest uppercase text-text3/70">
                               {t?.nav?.[sec] || sec} ({items.length})
                             </span>
                           </div>
                           {items.map(item => (
                             <button key={item.id} onClick={() => { onNavigate?.(sec); setOpen(false); clear(); }}
-                              style={{ width:'100%', padding:'7px 14px', display:'block', background:'transparent', border:'none', cursor:'pointer', textAlign:'left' }}
-                              onMouseEnter={e => e.currentTarget.style.background='rgba(255,255,255,0.05)'}
-                              onMouseLeave={e => e.currentTarget.style.background='transparent'}
+                              className="w-full px-3.5 py-1.5 block bg-transparent border-none cursor-pointer text-left transition-colors hover:bg-bg/60"
                             >
-                              <p style={{ fontSize:12, fontWeight:500, color:'#F5F7F8', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>
-                                {item.title || item.name || item.headline || '—'}
-                              </p>
-                              <p style={{ fontSize:11, color:'#5A7080', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>
-                                {item.industry || item.source || item.category || item.location || ''}
-                              </p>
+                              <p className="text-xs font-medium text-text truncate">{item.title || item.name || item.headline || '—'}</p>
+                              <p className="text-[11px] text-text3 truncate">{item.industry || item.source || item.category || item.location || ''}</p>
                             </button>
                           ))}
                         </div>
                       )
                     )}
-                  </div>
-                  <button onClick={() => { onNavigate?.('search'); setOpen(false); clear(); }}
-                    style={{ width:'100%', padding:'10px 14px', fontSize:11, color:'#BFACA4', borderTop:'1px solid rgba(255,255,255,0.06)', textAlign:'center', background:'transparent', border:'none', cursor:'pointer' }}
-                    onMouseEnter={e => e.currentTarget.style.background='rgba(255,255,255,0.04)'}
-                    onMouseLeave={e => e.currentTarget.style.background='transparent'}
+                  </div>                  <button onClick={() => { onNavigate?.('search'); setOpen(false); clear(); }}
+                    className="w-full py-2.5 px-3.5 text-[11px] text-accent border-t border-border text-center bg-transparent border-none cursor-pointer hover:bg-bg/60 transition-colors"
                   >
                     View all {total} results →
                   </button>
@@ -115,10 +108,10 @@ export default function TopBar({ title, subtitle, onNavigate }) {
         </div>
 
         {/* Status badge */}
-        <div style={{ display:'flex', alignItems:'center', gap:5, padding:'6px 10px', borderRadius:8, fontSize:11, fontWeight:600, background:configured?'rgba(16,185,129,0.1)':'rgba(245,158,11,0.1)', border:configured?'1px solid rgba(16,185,129,0.2)':'1px solid rgba(245,158,11,0.2)', color:configured?'#34D399':'#FBBF24' }}>
+        <div className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-[11px] font-semibold border ${configured ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-500' : 'bg-amber-500/10 border-amber-500/20 text-amber-500'}`}>
           <Database size={11} />
-          {configured ? <CheckCircle2 size={11}/> : <AlertCircle size={11}/>}
-          <span style={{ fontSize:10 }}>{configured ? 'Cloud' : 'Local'}</span>
+          {configured ? <CheckCircle2 size={11} /> : <AlertCircle size={11} />}
+          <span className="text-[10px]">{configured ? 'Cloud' : 'Local'}</span>
         </div>
       </div>
     </header>
