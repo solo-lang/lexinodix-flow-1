@@ -5,84 +5,117 @@ import { useApp } from '../../context/AppContext';
 import { useTranslation } from '../../lib/i18n';
 
 const NAV = [
-  { id:'overview',   icon:LayoutDashboard, section:null },
-  { id:'jobs',       icon:Briefcase,       section:'collection' },
-  { id:'companies',  icon:Building2,       section:'collection' },
-  { id:'news',       icon:Newspaper,       section:'collection' },
-  { id:'notes',      icon:BookOpen,        section:'collection' },
-  { id:'import',     icon:Upload,          section:'tools' },
-  { id:'inspection', icon:Microscope,      section:'tools' },
-  { id:'search',     icon:Globe2,          section:'tools' },
-  { id:'schema',     icon:Database,        section:'system' },
-  { id:'settings',   icon:Settings,        section:'system' },
+  { id: 'overview', icon: LayoutDashboard, section: null },
+  { id: 'jobs', icon: Briefcase, section: 'collection' },
+  { id: 'companies', icon: Building2, section: 'collection' },
+  { id: 'news', icon: Newspaper, section: 'collection' },
+  { id: 'notes', icon: BookOpen, section: 'collection' },
+  { id: 'import', icon: Upload, section: 'tools' },
+  { id: 'inspection', icon: Microscope, section: 'tools' },
+  { id: 'search', icon: Globe2, section: 'tools' },
+  { id: 'schema', icon: Database, section: 'system' },
+  { id: 'settings', icon: Settings, section: 'system' },
 ];
+
 const SECS = {
-  collection:{ en:'Data Collection', ar:'جمع البيانات' },
-  tools:     { en:'Tools',           ar:'الأدوات' },
-  system:    { en:'System',          ar:'النظام' },
+  collection: { en: 'Data Collection', ar: 'جمع البيانات' },
+  tools: { en: 'Tools', ar: 'الأدوات' },
+  system: { en: 'System', ar: 'النظام' },
 };
 
 export default function Sidebar({ activePage, onNavigate }) {
   const { language, switchLanguage } = useApp();
   const { t } = useTranslation(language);
   const [collapsed, setCollapsed] = useState(false);
+
   let lastSec = null;
 
   return (
-    <aside style={{ width:collapsed?64:240, display:'flex', flexDirection:'column', height:'100vh', flexShrink:0, transition:'width 0.25s', background:'linear-gradient(180deg,#0D2E42 0%,#072A40 60%,#061F30 100%)', borderRight:'1px solid rgba(255,255,255,0.07)', position:'relative' }}>
-
+    <aside 
+      className={`relative flex flex-col h-screen flex-shrink-0 transition-all duration-250 ease-in-out border-r border-border
+        ${collapsed ? 'w-16' : 'w-60'} 
+        bg-gradient-to-b from-[#0D2E42] via-bg-primary to-[#061F30]`}
+    >
       {/* Brand */}
-      <div style={{ display:'flex', alignItems:'center', gap:12, padding:'18px 16px', borderBottom:'1px solid rgba(255,255,255,0.07)', justifyContent:collapsed?'center':undefined }}>
-        <div style={{ width:32, height:32, borderRadius:10, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0, background:'linear-gradient(135deg,#1A4A6A,#BFACA4)', boxShadow:'0 2px 12px rgba(0,0,0,0.4)' }}>
-          <Zap size={15} color="#fff" />
+      <div className={`flex items-center gap-3 p-4 border-b border-border ${collapsed ? 'justify-center' : ''}`}>
+        <div className="flex items-center justify-center w-8 h-8 rounded-lg flex-shrink-0 bg-gradient-to-br from-[#1A4A6A] to-accent shadow-lg">
+          <Zap size={14} className="text-white" />
         </div>
+        
         {!collapsed && (
-          <div style={{ minWidth:0, lineHeight:1.25 }}>
-            <p style={{ fontSize:11, fontWeight:800, color:'#D9C5C1', letterSpacing:'0.14em', textTransform:'uppercase' }}>Lexinodix</p>
-            <p style={{ fontSize:9,  fontWeight:500, color:'#3D5A6A', letterSpacing:'0.12em', textTransform:'uppercase' }}>{t?.moduleName || 'Intelligence'}</p>
-          </div>
+          <div className="min-w-0 leading-tight">
+            <p className="text-[11px] font-bold tracking-widest uppercase text-accent2">Lexinodix</p>
+            <p className="text-[9px] font-medium tracking-widest uppercase text-text3/70">
+              {t?.moduleName || 'Intelligence'}
+            </p>          </div>
         )}
       </div>
 
       {/* Nav */}
-      <nav style={{ flex:1, overflowY:'auto', padding:'10px 8px', display:'flex', flexDirection:'column', gap:1 }}>
+      <nav className="flex flex-col gap-0.5 flex-1 overflow-y-auto py-3 px-2 scrollbar-thin">
         {NAV.map(item => {
           const showSec = !collapsed && item.section && item.section !== lastSec;
           if (item.section) lastSec = item.section;
           const active = activePage === item.id;
           const Icon = item.icon;
           const label = t?.nav?.[item.id] || item.id;
+
           return (
             <React.Fragment key={item.id}>
               {showSec && (
-                <div style={{ padding:'14px 10px 4px' }}>
-                  <span style={{ fontSize:9, fontWeight:700, letterSpacing:'0.18em', textTransform:'uppercase', color:'#2D4A5A' }}>
+                <div className="pt-3 px-2 pb-1">
+                  <span className="text-[9px] font-bold tracking-[0.18em] uppercase text-text3/50 block">
                     {SECS[item.section]?.[language] || item.section}
                   </span>
                 </div>
               )}
-              <button onClick={() => onNavigate(item.id)} title={collapsed ? label : undefined}
-                style={{ width:'100%', display:'flex', alignItems:'center', gap:10, padding:'9px 10px', borderRadius:10, cursor:'pointer', transition:'all 0.15s', position:'relative', justifyContent:collapsed?'center':undefined, background:active?'rgba(255,255,255,0.08)':'transparent', color:active?'#F5F7F8':'#4A6878', border:active?'1px solid rgba(191,172,164,0.12)':'1px solid transparent' }}
-                onMouseEnter={e=>{ if(!active){e.currentTarget.style.background='rgba(255,255,255,0.05)';e.currentTarget.style.color='#8FA8B8';} }}
-                onMouseLeave={e=>{ if(!active){e.currentTarget.style.background='transparent';e.currentTarget.style.color='#4A6878';} }}
+              
+              <button
+                onClick={() => onNavigate(item.id)}
+                title={collapsed ? label : undefined}
+                className={`
+                  w-full flex items-center gap-3 px-3 py-2 rounded-lg cursor-pointer transition-all duration-150 relative
+                  ${collapsed ? 'justify-center' : ''}
+                  ${active 
+                    ? 'bg-white/10 text-text border border-white/10' 
+                    : 'bg-transparent text-text3/80 border border-transparent hover:bg-white/5 hover:text-accent/80'}
+                `}
               >
-                {active && <span className="nav-active-bar" />}
-                <Icon size={15} style={{ flexShrink:0, color:active?'#BFACA4':'inherit' }} />
-                {!collapsed && <span style={{ fontSize:12.5, fontWeight:active?600:400, flex:1, textAlign:'left', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{label}</span>}
-                {active && !collapsed && <span style={{ width:5, height:5, borderRadius:'50%', background:'#BFACA4', flexShrink:0 }} />}
-              </button>
-            </React.Fragment>
+                {active && !collapsed && (
+                  <span className="absolute inset-y-0 left-0 w-[3px] bg-accent rounded-r-full" />
+                )}
+                
+                <Icon size={16} className={`flex-shrink-0 transition-colors ${active ? 'text-accent' : ''}`} />
+                
+                {!collapsed && (
+                  <span className={`text-[12.5px] flex-1 text-left truncate ${active ? 'font-semibold' : 'font-normal'}`}>
+                    {label}
+                  </span>
+                )}
+                
+                {active && !collapsed && (
+                  <span className="w-1.5 h-1.5 rounded-full bg-accent flex-shrink-0" />
+                )}
+              </button>            </React.Fragment>
           );
         })}
       </nav>
 
-      {/* Lang switcher */}
+      {/* Lang Switcher */}
       {!collapsed && (
-        <div style={{ padding:'8px 10px', borderTop:'1px solid rgba(255,255,255,0.07)' }}>
-          <div style={{ display:'flex', gap:4, padding:4, borderRadius:10, background:'rgba(0,0,0,0.25)', border:'1px solid rgba(255,255,255,0.06)' }}>
-            {['en','ar'].map(l => (
-              <button key={l} onClick={() => switchLanguage(l)}
-                style={{ flex:1, padding:'6px 0', borderRadius:7, fontSize:11, fontWeight:700, letterSpacing:'0.1em', cursor:'pointer', transition:'all 0.15s', background:language===l?'rgba(255,255,255,0.1)':'transparent', color:language===l?'#D9C5C1':'#3D5A6A', border:'none' }}>
+        <div className="p-2 border-t border-border">
+          <div className="flex gap-1 p-1 rounded-lg bg-black/20 border border-border/50">
+            {['en', 'ar'].map(l => (
+              <button
+                key={l}
+                onClick={() => switchLanguage(l)}
+                className={`
+                  flex-1 py-1 rounded-md text-[11px] font-bold tracking-widest cursor-pointer transition-all duration-150 border-none outline-none
+                  ${language === l 
+                    ? 'bg-white/10 text-accent2 shadow-sm' 
+                    : 'bg-transparent text-text3/50 hover:text-accent/70'}
+                `}
+              >
                 {l === 'en' ? 'EN' : 'عر'}
               </button>
             ))}
@@ -90,13 +123,16 @@ export default function Sidebar({ activePage, onNavigate }) {
         </div>
       )}
 
-      {/* Collapse toggle */}
-      <button onClick={() => setCollapsed(c => !c)}
-        style={{ position:'absolute', top:72, right:-12, width:24, height:24, borderRadius:'50%', display:'flex', alignItems:'center', justifyContent:'center', background:'#0D2E42', border:'1px solid rgba(255,255,255,0.1)', color:'#4A6878', cursor:'pointer', boxShadow:'0 2px 8px rgba(0,0,0,0.4)', zIndex:10 }}
-        onMouseEnter={e => e.currentTarget.style.color='#BFACA4'}
-        onMouseLeave={e => e.currentTarget.style.color='#4A6878'}
+      {/* Collapse Toggle */}
+      <button
+        onClick={() => setCollapsed(c => !c)}
+        className="
+          absolute top-18 -right-3 w-6 h-6 rounded-full flex items-center justify-center
+          bg-[#0D2E42] border border-white/10 text-text3/70 cursor-pointer shadow-md z-10
+          hover:text-accent hover:border-accent transition-colors
+        "
       >
-        {collapsed ? <ChevronRight size={12}/> : <ChevronLeft size={12}/>}
+        {collapsed ? <ChevronRight size={12} /> : <ChevronLeft size={12} />}
       </button>
     </aside>
   );
