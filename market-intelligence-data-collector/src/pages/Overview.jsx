@@ -12,46 +12,49 @@ import { SCHEMA_SQL } from '../lib/supabase';
 import Button from '../components/ui/Button';
 import Badge from '../components/ui/Badge';
 
+// StatCard Component - Light Theme
 function StatCard({ icon: Icon, label, value, color, onClick, trend }) {
   return (
     <button
       onClick={onClick}
-      className="group relative p-5 rounded-2xl bg-[#072A40]/60 border border-[#BFACA4]/10 hover:border-[#BFACA4]/30 transition-all duration-200 text-left w-full hover:shadow-lg hover:shadow-[#011C26]/50"
+      className="group relative p-5 rounded-2xl bg-surface border border-border hover:border-accent transition-all duration-200 text-left w-full hover:shadow-lg hover:shadow-accent/5"
     >
       <div className={`w-10 h-10 rounded-xl flex items-center justify-center mb-4 ${color}`}>
         <Icon size={20} />
       </div>
-      <div className="text-3xl font-bold text-white mb-1 tabular-nums">{value}</div>
-      <div className="text-xs text-[#4F5459] font-medium">{label}</div>
-      <ArrowRight size={14} className="absolute top-5 right-5 text-[#4F5459] group-hover:text-[#BFACA4] transition-colors" />
+      <div className="text-3xl font-bold text-text mb-1 tabular-nums">{value}</div>
+      <div className="text-xs text-text2 font-medium">{label}</div>
+      <ArrowRight size={14} className="absolute top-5 right-5 text-text3 group-hover:text-accent transition-colors" />
     </button>
   );
 }
 
+// RecentList Component - Light Theme
 function RecentList({ title, items, fieldMap, emptyMsg, onNavigate, navId }) {
   return (
-    <div className="bg-[#072A40]/40 border border-[#BFACA4]/10 rounded-2xl overflow-hidden">
-      <div className="flex items-center justify-between px-5 py-4 border-b border-[#BFACA4]/10">
-        <h3 className="text-sm font-semibold text-white">{title}</h3>
+    <div className="bg-surface border border-border rounded-2xl overflow-hidden">
+      <div className="flex items-center justify-between px-5 py-4 border-b border-border">
+        <h3 className="text-sm font-semibold text-text">{title}</h3>
         <button
           onClick={() => onNavigate?.(navId)}
-          className="text-xs text-[#BFACA4] hover:text-white transition-colors flex items-center gap-1"
+          className="text-xs text-accent hover:text-primary transition-colors flex items-center gap-1"
         >
           View all <ArrowRight size={11} />
         </button>
       </div>
-      <div className="divide-y divide-[#072A40]/60">
+      <div className="divide-y divide-border">
         {items.length === 0 ? (
-          <div className="px-5 py-8 text-center text-xs text-[#4F5459]">{emptyMsg}</div>
+          <div className="px-5 py-8 text-center text-xs text-text3">{emptyMsg}</div>
         ) : (
           items.slice(0, 5).map(item => (
-            <div key={item.id} className="px-5 py-3 flex items-start justify-between gap-3 hover:bg-[#072A40]/30 transition-colors">
-              <div className="min-w-0">
-                <p className="text-xs font-medium text-white truncate">{item[fieldMap.primary] || '—'}</p>
-                <p className="text-[10px] text-[#4F5459] truncate mt-0.5">{item[fieldMap.secondary] || ''}</p>
+            <div key={item.id} className="px-5 py-3 flex items-start justify-between gap-3 hover:bg-bg/60 transition-colors">              <div className="min-w-0">
+                <p className="text-xs font-medium text-text truncate">{item[fieldMap.primary] || '—'}</p>
+                <p className="text-[10px] text-text2 truncate mt-0.5">{item[fieldMap.secondary] || ''}</p>
               </div>
               {item[fieldMap.badge] && (
-                <Badge variant="muted" className="shrink-0 text-[9px]">{item[fieldMap.badge]}</Badge>
+                <Badge variant="muted" className="shrink-0 text-[9px] bg-bg-hover text-primary border border-border">
+                  {item[fieldMap.badge]}
+                </Badge>
               )}
             </div>
           ))
@@ -93,66 +96,64 @@ export default function Overview({ onNavigate }) {
   const totalRecords = stats.jobs + stats.companies + stats.news + stats.notes;
 
   return (
-    <div className="p-6 space-y-6">
-      {/* Connection banner */}
+    <div className="p-6 space-y-6">      {/* Connection banner - Light Theme */}
       {!configured && (
-        <div className="flex items-start gap-3 p-4 rounded-xl bg-amber-900/20 border border-amber-700/30">
-          <AlertCircle size={16} className="text-amber-400 mt-0.5 shrink-0" />
+        <div className="flex items-start gap-3 p-4 rounded-xl bg-amber-50 border border-amber-200">
+          <AlertCircle size={16} className="text-amber-600 mt-0.5 shrink-0" />
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-semibold text-amber-300">{t.settings.localMode}</p>
-            <p className="text-xs text-amber-400/70 mt-0.5">{t.settings.localModeDesc}</p>
+            <p className="text-sm font-semibold text-amber-800">{t.settings.localMode}</p>
+            <p className="text-xs text-amber-600/70 mt-0.5">{t.settings.localModeDesc}</p>
           </div>
-          <Button variant="ghost" size="xs" onClick={() => onNavigate?.('settings')}>
+          <Button variant="ghost" size="xs" onClick={() => onNavigate?.('settings')} className="text-primary hover:text-accent">
             Configure →
           </Button>
         </div>
       )}
 
-      {/* Hero strip */}
-      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#072A40] via-[#072A40] to-[#011C26] border border-[#BFACA4]/10 p-6">
-        <div className="absolute inset-0 bg-gradient-to-br from-[#BFACA4]/5 to-transparent pointer-events-none" />
+      {/* Hero strip - Light Premium Gradient */}
+      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-primary via-primary to-bg border border-border p-6">
+        <div className="absolute inset-0 bg-gradient-to-br from-accent/5 to-transparent pointer-events-none" />
         <div className="relative flex flex-wrap items-center justify-between gap-4">
           <div>
             <div className="flex items-center gap-2 mb-1">
-              <Zap size={14} className="text-[#BFACA4]" />
-              <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#BFACA4]">
+              <Zap size={14} className="text-accent" />
+              <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-accent">
                 Module 1 · Market Collector
               </span>
             </div>
             <h2 className="text-2xl font-bold text-white">{t.overview.title}</h2>
-            <p className="text-xs text-[#4F5459] mt-1">{t.overview.subtitle}</p>
+            <p className="text-xs text-white/70 mt-1">{t.overview.subtitle}</p>
           </div>
           <div className="text-right">
-            <div className="text-4xl font-bold text-[#D9C5C1] tabular-nums">{loading ? '—' : totalRecords.toLocaleString()}</div>
-            <div className="text-xs text-[#4F5459]">{t.overview.totalRecords}</div>
+            <div className="text-4xl font-bold text-accent-2 tabular-nums">{loading ? '—' : totalRecords.toLocaleString()}</div>
+            <div className="text-xs text-white/70">{t.overview.totalRecords}</div>
           </div>
         </div>
       </div>
 
-      {/* Stat cards */}
+      {/* Stat cards - Light Theme Colors */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
           icon={Briefcase} label={t.jobs.title}
           value={loading ? '—' : stats.jobs.toLocaleString()}
-          color="bg-blue-900/40 text-blue-300 border border-blue-700/20"
+          color="bg-blue-50 text-blue-700 border border-blue-200"
           onClick={() => onNavigate?.('jobs')}
         />
         <StatCard
           icon={Building2} label={t.companies.title}
           value={loading ? '—' : stats.companies.toLocaleString()}
-          color="bg-purple-900/40 text-purple-300 border border-purple-700/20"
+          color="bg-purple-50 text-purple-700 border border-purple-200"
           onClick={() => onNavigate?.('companies')}
         />
-        <StatCard
-          icon={Newspaper} label={t.news.title}
+        <StatCard          icon={Newspaper} label={t.news.title}
           value={loading ? '—' : stats.news.toLocaleString()}
-          color="bg-emerald-900/40 text-emerald-300 border border-emerald-700/20"
+          color="bg-emerald-50 text-emerald-700 border border-emerald-200"
           onClick={() => onNavigate?.('news')}
         />
         <StatCard
           icon={BookOpen} label={t.notes.title}
           value={loading ? '—' : stats.notes.toLocaleString()}
-          color="bg-amber-900/40 text-amber-300 border border-amber-700/20"
+          color="bg-amber-50 text-amber-700 border border-amber-200"
           onClick={() => onNavigate?.('notes')}
         />
       </div>
@@ -185,7 +186,7 @@ export default function Overview({ onNavigate }) {
         />
       </div>
 
-      {/* Quick actions */}
+      {/* Quick actions - Light Theme */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         {[
           { label: 'Import Data', sub: 'CSV · JSON · Manual', nav: 'import', icon: Database },
@@ -193,26 +194,25 @@ export default function Overview({ onNavigate }) {
           { label: 'Global Search', sub: 'Search all collections', nav: 'search', icon: TrendingUp },
         ].map(({ label, sub, nav, icon: Icon }) => (
           <button
-            key={nav}
-            onClick={() => onNavigate?.(nav)}
-            className="group flex items-center gap-4 p-4 rounded-2xl bg-[#072A40]/40 border border-[#BFACA4]/10 hover:border-[#BFACA4]/30 hover:bg-[#072A40]/60 transition-all duration-200 text-left"
+            key={nav}            onClick={() => onNavigate?.(nav)}
+            className="group flex items-center gap-4 p-4 rounded-2xl bg-surface border border-border hover:border-accent hover:bg-bg/60 transition-all duration-200 text-left"
           >
-            <Icon size={18} className="text-[#BFACA4] shrink-0" />
+            <Icon size={18} className="text-accent shrink-0" />
             <div>
-              <p className="text-sm font-semibold text-white group-hover:text-[#D9C5C1]">{label}</p>
-              <p className="text-[10px] text-[#4F5459]">{sub}</p>
+              <p className="text-sm font-semibold text-text group-hover:text-primary">{label}</p>
+              <p className="text-[10px] text-text2">{sub}</p>
             </div>
-            <ArrowRight size={14} className="ms-auto text-[#4F5459] group-hover:text-[#BFACA4] transition-colors" />
+            <ArrowRight size={14} className="ms-auto text-text3 group-hover:text-accent transition-colors" />
           </button>
         ))}
       </div>
 
-      {/* Future modules roadmap */}
-      <div className="rounded-2xl border border-[#BFACA4]/10 overflow-hidden">
-        <div className="px-5 py-3.5 bg-[#072A40]/30 border-b border-[#BFACA4]/10">
-          <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#4F5459]">Platform Roadmap · Lexinodix Intelligence Engine</p>
+      {/* Future modules roadmap - Light Theme */}
+      <div className="rounded-2xl border border-border overflow-hidden bg-surface">
+        <div className="px-5 py-3.5 bg-bg border-b border-border">
+          <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-text3">Platform Roadmap · Lexinodix Intelligence Engine</p>
         </div>
-        <div className="flex flex-wrap divide-x divide-[#072A40]/60">
+        <div className="flex flex-wrap divide-x divide-border">
           {[
             { num: '01', label: 'Market Collector', status: 'active', desc: 'Data Collection' },
             { num: '02', label: 'Analysis Engine', status: 'planned', desc: 'Data Processing' },
@@ -220,13 +220,13 @@ export default function Overview({ onNavigate }) {
             { num: '04', label: 'Opportunity Engine', status: 'planned', desc: 'Opportunity Scoring' },
             { num: '05', label: 'Strategic Dashboard', status: 'planned', desc: 'Executive View' },
           ].map(m => (
-            <div key={m.num} className={`flex-1 min-w-[130px] px-4 py-3.5 ${m.status === 'active' ? 'bg-[#072A40]/40' : ''}`}>
+            <div key={m.num} className={`flex-1 min-w-[130px] px-4 py-3.5 ${m.status === 'active' ? 'bg-bg/60' : ''}`}>
               <div className="flex items-center gap-1.5 mb-0.5">
-                <span className="text-[9px] font-bold font-mono text-[#4F5459]">Module {m.num}</span>
-                {m.status === 'active' && <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-400" />}
+                <span className="text-[9px] font-bold font-mono text-text3">Module {m.num}</span>
+                {m.status === 'active' && <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-500" />}
               </div>
-              <p className={`text-xs font-semibold ${m.status === 'active' ? 'text-[#D9C5C1]' : 'text-[#4F5459]'}`}>{m.label}</p>
-              <p className="text-[10px] text-[#4F5459] mt-0.5">{m.desc}</p>
+              <p className={`text-xs font-semibold ${m.status === 'active' ? 'text-primary' : 'text-text2'}`}>{m.label}</p>
+              <p className="text-[10px] text-text2 mt-0.5">{m.desc}</p>
             </div>
           ))}
         </div>
