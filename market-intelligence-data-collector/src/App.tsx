@@ -1,7 +1,6 @@
 // @ts-nocheck
 import { useState } from 'react';
 import { AppProvider, useApp } from './context/AppContext';
-
 // Pages
 import Overview from './pages/Overview';
 import Jobs from './pages/Jobs';
@@ -13,7 +12,6 @@ import DataInspection from './pages/DataInspection';
 import GlobalSearch from './pages/GlobalSearch';
 import Schema from './pages/Schema';
 import Settings from './pages/Settings';
-
 // Layout
 import Sidebar from './components/layout/Sidebar';
 import TopBar from './components/layout/TopBar';
@@ -36,7 +34,6 @@ const PAGE_META = {
 function AppInner() {
   const [activePage, setActivePage] = useState('overview');
   const { language } = useApp();
-
   const meta = PAGE_META[activePage] || PAGE_META.overview;
   const title = language === 'ar' ? meta.ar : meta.en;
 
@@ -57,16 +54,14 @@ function AppInner() {
   };
 
   return (
-    <div className="flex h-screen bg-[#011C26] overflow-hidden" style={{ fontFamily: "'Inter', sans-serif" }}>
+    <div className="flex h-screen bg-bg overflow-hidden font-sans">
       <Sidebar activePage={activePage} onNavigate={setActivePage} />
-
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         <TopBar title={title} subtitle={meta.sub} onNavigate={setActivePage} />
         <main className="flex-1 overflow-hidden flex flex-col">
           {renderPage()}
         </main>
       </div>
-
       <Toast />
       <ConfirmDialog />
     </div>
