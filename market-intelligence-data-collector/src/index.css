@@ -1,27 +1,57 @@
 @import "tailwindcss";
 
 :root {
-  --c-bg:      #011C26;
-  --c-primary: #072A40;
-  --c-surface: #123247;
-  --c-card:    #173D55;
-  --c-border:  rgba(255,255,255,0.08);
-  --c-bhi:     rgba(191,172,164,0.25);
-  --c-text:    #F5F7F8;
-  --c-text2:   #A8B4BC;
-  --c-text3:   #5A7080;
-  --c-accent:  #BFACA4;
-  --c-accent2: #D9C5C1;
+  /* الخلفية الأساسية للموقع - كافيه فاتح جداً يميل للأبيض بنسبة 90% */
+  --c-bg:          #F9F8F7; 
+
+  /* اللون الثانوي (الكافيه الدافئ) - البطل الثاني للأزرار واللمسات */
+  --c-secondary:   #BFACA4; 
+
+  /* البيج الفاتح - لخلفيات الحقول أو الأسطح الناعمة */
+  --c-surface:     #D9C5C1; 
+
+  /* الكحلي الداكن - للحاجات الطفيفة جداً (النصوص الأساسية والعناوين الرفيعة) */
+  --c-primary:     #072A40; 
+
+  /* الكحلي الغامق جداً - لخطوط العناوين الكبيرة أو الأيقونات الطفيفة */
+  --c-dark:        #011C26; 
+
+  /* الرمادي المتزن - للنصوص الثانوية والـ Placeholders عشان العين ترتاح */
+  --c-gray:        #4F5459; 
+
+  /* لون الحدود والخطوط الفاصلة - رمادي شفاف جداً عشان المينيماليزم */
+  --c-border:      rgba(79, 84, 89, 0.1); 
+
+  /* إضاءة التحديد والـ Hover - لمسة شفافة ناعمة من الكافيه */
+  --c-bhi:         rgba(191, 172, 164, 0.15); 
+
+  /* إعادة توجيه المتغيرات القديمة للجديدة عشان الكود يشتغل فوراً وميضربش */
+  --c-text:        var(--c-primary);
+  --c-text2:       var(--c-gray);
+  --c-text3:       rgba(79, 84, 89, 0.6);
+  --c-card:        #FFFFFF; /* الكروت هتبقى بيضاء ناصعة على الخلفية الفاتحة */
+}
+
+/* ربط المتغيرات بنظام Tailwind v4 الجديد أوتوماتيك */
+@theme {
+  --color-bg:        var(--c-bg);
+  --color-secondary: var(--c-secondary);
+  --color-surface:   var(--c-surface);
+  --color-primary:   var(--c-primary);
+  --color-dark:      var(--c-dark);
+  --color-gray:      var(--c-gray);
+  --color-border:    var(--c-border);
 }
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 html { scroll-behavior: smooth; -webkit-font-smoothing: antialiased; }
 body { background: var(--c-bg); color: var(--c-text); font-family: 'Inter', system-ui, sans-serif; line-height: 1.5; overflow: hidden; }
 
-::-webkit-scrollbar { width: 4px; height: 4px; }
+/* تحسين السكرول بار ليتماشى مع الألوان الفاتحة الجديدة */
+::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 99px; }
-::-webkit-scrollbar-thumb:hover { background: var(--c-accent); }
+::-webkit-scrollbar-thumb { background: rgba(79, 84, 89, 0.15); border-radius: 99px; }
+::-webkit-scrollbar-thumb:hover { background: var(--c-secondary); }
 
 ::selection { background: rgba(191,172,164,0.2); }
 
@@ -50,11 +80,11 @@ select option { background: var(--c-surface); color: var(--c-text); }
   border-radius: 14px;
   transition: border-color 0.2s, box-shadow 0.2s;
 }
-.card:hover { border-color: var(--c-bhi); box-shadow: 0 4px 24px rgba(0,0,0,0.25); }
+.card:hover { border-color: var(--c-secondary); box-shadow: 0 4px 20px rgba(79, 84, 89, 0.05); }
 
 .field-base {
-  width: 100%; padding: 8px 12px;
-  background: var(--c-primary);
+  width: 100%; padding: 10px 14px;
+  background: #FFFFFF;
   border: 1px solid var(--c-border);
   border-radius: 10px;
   color: var(--c-text); font-size: 13px;
@@ -62,7 +92,7 @@ select option { background: var(--c-surface); color: var(--c-text); }
   outline: none;
 }
 .field-base::placeholder { color: var(--c-text3); }
-.field-base:focus { border-color: var(--c-bhi); }
+.field-base:focus { border-color: var(--c-secondary); }
 
 .badge-base {
   display: inline-flex; align-items: center; gap: 4px;
@@ -72,43 +102,58 @@ select option { background: var(--c-surface); color: var(--c-text); }
 
 .data-table { width: 100%; border-collapse: collapse; }
 .data-table th {
-  padding: 10px 14px; text-align: left;
+  padding: 12px 16px; text-align: left;
   font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase;
   color: var(--c-text3); border-bottom: 1px solid var(--c-border);
-  background: var(--c-surface); position: sticky; top: 0; z-index: 1; white-space: nowrap;
+  background: var(--c-bg); position: sticky; top: 0; z-index: 1; white-space: nowrap;
 }
 .data-table td {
-  padding: 10px 14px; font-size: 13px; color: var(--c-text2);
+  padding: 12px 16px; font-size: 13px; color: var(--c-text2);
   border-bottom: 1px solid var(--c-border); vertical-align: top;
 }
 .data-table tr:last-child td { border-bottom: none; }
-.data-table tr:hover td { background: rgba(255,255,255,0.025); }
+.data-table tr:hover td { background: rgba(79, 84, 89, 0.02); }
 .data-table td.primary { color: var(--c-text); font-weight: 500; }
 
+/* 🚀 تعديل مساحة المحتوى والمسافات الكبيرة بين السايدبار والعناصر */
 .page-content {
-  flex: 1; overflow-y: auto; padding: 24px;
-  display: flex; flex-direction: column; gap: 20px;
+  flex: 1; 
+  overflow-y: auto; 
+  padding: 40px 48px; /* تكبير الحواف الداخلية للمحتوى لإعطاء اتساع هائل */
+  display: flex; 
+  flex-direction: column; 
+  gap: 32px; /* تكبير المسافة الرأسية بين الكروت والعناصر الداخلية */
+}
+
+/* 🚀 كلاس إضافي للحاوية الكبرى (Layout Wrapper) إذا كنت تستخدم Flexbox */
+/* يفضل إضافته لعنصر الأب اللي شايل السايدبار والمحتوى مع بعض ليعطيهم تباعد خارق */
+.app-layout {
+  display: flex;
+  width: 100vw;
+  height: 100vh;
+  gap: 24px; /* يضع مسافة عازلة ومريحة جداً بين الشريط الجانبي والمحتوى */
+  background: var(--c-bg);
 }
 
 .empty-state {
   display: flex; flex-direction: column; align-items: center;
-  justify-content: center; gap: 10px; padding: 48px 24px;
+  justify-content: center; gap: 12px; padding: 64px 32px;
   color: var(--c-text3); text-align: center;
 }
-.empty-state svg { opacity: 0.3; }
+.empty-state svg { opacity: 0.4; }
 .empty-state h3 { font-size: 14px; font-weight: 600; color: var(--c-text2); }
 .empty-state p  { font-size: 12px; max-width: 280px; }
 
 .nav-active-bar {
   position: absolute; inset-y: 0; left: 0;
-  width: 3px; background: var(--c-accent);
+  width: 3px; background: var(--c-secondary);
   border-radius: 0 3px 3px 0;
 }
 
-.json-key    { color: #7EB8D4; }
-.json-string { color: #A8D8A8; }
-.json-number { color: #F0C070; }
-.json-bool   { color: #F08080; }
+.json-key    { color: #2B7A9B; }
+.json-string { color: #4A854A; }
+.json-number { color: #B37D1B; }
+.json-bool   { color: #C24D4D; }
 .json-null   { color: var(--c-text3); }
 
 .line-clamp-2 { display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
